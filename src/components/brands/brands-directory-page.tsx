@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Building2, LayoutGrid, Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { getBrands, getModels } from "@/lib/client/catalogue-api";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { getBrandModels, getBrands } from "@/lib/client/catalogue-api";
 import { slugifyPart } from "@/lib/seo/slugs";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { BrandLogo } from "@/components/brands/brand-logo";
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { PageFade } from "@/components/shared/page-fade";
 
 type BrandRow = { name?: string; brand_name?: string; slug?: string };
-type ModelRow = { brand_name?: string };
+type BrandCard = { name: string; slug: string };
 
 export function BrandsDirectoryPage() {
   const reduceMotion = useReducedMotion();
@@ -23,31 +23,49 @@ export function BrandsDirectoryPage() {
     queryKey: ["catalogue-brands"],
     queryFn: () => getBrands(),
   });
-  const { data: modelsResponse } = useQuery({
-    queryKey: ["catalogue-models"],
-    queryFn: () => getModels(),
-  });
-
   const brands = useMemo(() => {
-    const list = ((brandsResponse ?? []) as BrandRow[])
-      .map((brand) => String(brand.name ?? brand.brand_name ?? "").trim())
-      .filter(Boolean);
-    const uniq = Array.from(new Set(list));
-    return uniq.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    const cards = ((brandsResponse ?? []) as BrandRow[])
+      .map((brand) => {
+        const name = String(brand.name ?? brand.brand_name ?? "").trim();
+        const slug = String(brand.slug ?? slugifyPart(name)).trim();
+        if (!name || !slug) return null;
+        return { name, slug };
+      })
+      .filter((row): row is BrandCard => Boolean(row));
+
+    const deduped = new Map<string, BrandCard>();
+    for (const card of cards) {
+      const key = card.slug.toLowerCase();
+      if (!deduped.has(key)) deduped.set(key, card);
+    }
+    return [...deduped.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
   }, [brandsResponse]);
 
   const filteredBrands = useMemo(() => {
     const q = brandQuery.trim().toLowerCase();
     if (!q) return brands;
-    return brands.filter((b) => b.toLowerCase().includes(q));
+    return brands.filter((b) => b.name.toLowerCase().includes(q));
   }, [brands, brandQuery]);
-  const listings = (modelsResponse ?? []) as ModelRow[];
-  const countsByBrand = listings.reduce<Record<string, number>>((acc, model) => {
-    const key = String(model.brand_name ?? "").trim().toLowerCase();
-    if (!key) return acc;
-    acc[key] = (acc[key] ?? 0) + 1;
-    return acc;
-  }, {});
+  const modelCountQueries = useQueries({
+    queries: brands.map((brand) => ({
+      queryKey: ["catalogue-brand-model-count", brand.slug],
+      queryFn: async () => {
+        const rows = await getBrandModels(brand.slug);
+        return rows.length;
+      },
+      staleTime: 5 * 60_000,
+    })),
+  });
+  const countsByBrandSlug = useMemo(
+    () =>
+      Object.fromEntries(
+        brands.map((brand, idx) => [
+          brand.slug.toLowerCase(),
+          typeof modelCountQueries[idx]?.data === "number" ? (modelCountQueries[idx].data as number) : 0,
+        ])
+      ),
+    [brands, modelCountQueries]
+  );
 
   return (
     <PageFade>
@@ -124,26 +142,25 @@ export function BrandsDirectoryPage() {
           ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
             {filteredBrands.map((brand, i) => {
-              const slug = slugifyPart(brand);
-              const n = countsByBrand[brand.toLowerCase()] ?? 0;
+              const n = countsByBrandSlug[brand.slug.toLowerCase()] ?? 0;
               return (
                 <motion.li
-                  key={brand}
+                  key={brand.slug}
                   initial={reduceMotion ? false : { opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-20px" }}
                   transition={{ delay: Math.min(i * 0.025, 0.45), duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <Link
-                    href={`/cars/brand/${slug}`}
+                    href={`/cars/brand/${brand.slug}`}
                     className="group flex h-full flex-col rounded-2xl border border-border/70 bg-card p-1 shadow-[0_4px_24px_-12px_rgba(15,23,42,0.1)] ring-1 ring-foreground/[0.04] transition duration-300 hover:-translate-y-1 hover:border-foreground/12 hover:shadow-[0_24px_48px_-28px_rgba(24,24,27,0.14)]"
                   >
                     <div className="flex min-h-[8.5rem] w-full items-center justify-center rounded-xl bg-linear-to-b from-white to-secondary/40 px-4 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] ring-1 ring-border/50 dark:from-zinc-100 dark:to-zinc-200/95">
-                      <BrandLogo brand={brand} size={76} className="rounded-xl border-0 bg-transparent shadow-none" />
+                      <BrandLogo brand={brand.name} size={76} className="rounded-xl border-0 bg-transparent shadow-none" />
                     </div>
                     <div className="flex flex-1 flex-col px-3 pb-4 pt-3 text-center sm:px-4 sm:pb-5 sm:pt-4">
                       <span className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug text-foreground sm:text-[0.9375rem]">
-                        {brand}
+                        {brand.name}
                       </span>
                       <span className="mt-1 text-[11px] font-medium tabular-nums text-muted-foreground">
                         {n.toLocaleString("en-IN")} model{n === 1 ? "" : "s"} in catalogue

@@ -571,91 +571,15 @@ export function BookExpertPageClient() {
                     </div>
                   ) : null}
 
-                  {authed && (bookingsLoading || myBookings.length > 0) ? (
+                  {authed ? (
                     <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-3.5 py-3">
                       <p className="text-xs font-bold uppercase tracking-wider text-emerald-200/90">Your bookings</p>
-                      {bookingsLoading ? (
-                        <div className="mt-2 flex items-center gap-2 text-xs text-zinc-300">
-                          <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" aria-hidden />
-                          Loading…
-                        </div>
-                      ) : (
-                        <ul className="mt-2 space-y-2">
-                          {myBookings.map((b) => {
-                            const pending = isPendingPaymentBooking(b);
-                            return (
-                              <li
-                                key={b.id}
-                                className="rounded-lg border border-white/8 bg-zinc-950/50 px-3 py-2.5 text-xs leading-snug text-zinc-200"
-                              >
-                                <div className="flex flex-wrap items-start justify-between gap-2">
-                                  <div>
-                                    <span
-                                      className={cn(
-                                        "inline-flex rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide sm:text-xs",
-                                        pending
-                                          ? "bg-amber-500/20 text-amber-200"
-                                          : "bg-emerald-500/15 text-emerald-200/95"
-                                      )}
-                                    >
-                                      {pending ? "Payment pending" : (b.status || "booking").replace(/_/g, " ")}
-                                    </span>
-                                    <p className="mt-1.5 font-medium text-zinc-100">{b.slotDate}</p>
-                                    <p className="text-zinc-400">{b.slotStartLabel}</p>
-                                  </div>
-                                </div>
-                                {pending ? (
-                                  <Button
-                                    type="button"
-                                    variant="expert"
-                                    className="mt-3 h-10 w-full text-sm font-semibold"
-                                    disabled={!contactReadyForPayment || paying}
-                                    onClick={() => void handleCompletePendingPayment(b)}
-                                  >
-                                    {paying && resumingBookingId === b.id ? (
-                                      <>
-                                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                                        Opening checkout…
-                                      </>
-                                    ) : (
-                                      <>
-                                        <IndianRupee className="h-3.5 w-3.5" aria-hidden />
-                                        Complete payment
-                                      </>
-                                    )}
-                                  </Button>
-                                ) : b.meetLink ? (
-                                  <a
-                                    href={b.meetLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mt-2 inline-flex items-center gap-1.5 text-emerald-300 underline underline-offset-2"
-                                  >
-                                    <Video className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                    Join call
-                                  </a>
-                                ) : null}
-                                {canCancelBooking(b) ? (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    className="mt-2 h-9 w-full border border-white/10 bg-transparent text-xs font-medium text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
-                                    onClick={() => setCancelTarget(b)}
-                                  >
-                                    Cancel booking
-                                  </Button>
-                                ) : null}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                      {pendingBookings.length > 0 ? (
-                        <p className="mt-2 text-xs leading-snug text-amber-200/85">
-                          Pending payments: use Complete payment on the row above. You can still book another slot
-                          below.
-                        </p>
-                      ) : null}
+                      <p className="mt-2 text-xs text-zinc-300">Open your dedicated history page to view active booking and all past bookings.</p>
+                      <div className="mt-3">
+                        <Button asChild variant="outline" className="h-9 border-white/15 bg-transparent text-zinc-100 hover:bg-white/5">
+                          <Link href="/book-expert/bookings">View booking history</Link>
+                        </Button>
+                      </div>
                     </div>
                   ) : null}
 

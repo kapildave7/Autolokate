@@ -85,6 +85,10 @@ export function shouldSuppressAutoBreadcrumb(pathname: string): boolean {
   if (parts.length === 2 && parts[0] === "cars" && parts[1] !== "explore") {
     return true;
   }
+  // Canonical catalogue model path at /cars/brand/{brandSlug}/{modelSlug}
+  if (parts[0] === "cars" && parts[1] === "brand" && parts.length >= 4) {
+    return true;
+  }
 
   // Blog posts: ArticlePremium has title in trail
   if (parts[0] === "blog" && parts.length >= 2) {

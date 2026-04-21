@@ -109,6 +109,11 @@ type Props = {
   maxPrice: number | null;
   detailFields: Field[];
   variants: LiveVariant[];
+  modelImages?: Array<Record<string, unknown>>;
+  modelColors?: Array<Record<string, unknown>>;
+  specGroups?: Array<Record<string, unknown>>;
+  featureGroups?: Array<Record<string, unknown>>;
+  reviews?: Array<Record<string, unknown>>;
 };
 
 function toPrice(value: unknown): number | null {
@@ -136,6 +141,13 @@ function humanizeKey(value: string): string {
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase())
     .trim();
+}
+
+function normalizeHexColor(value: unknown): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const hex = raw.startsWith("#") ? raw : `#${raw}`;
+  return /^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/.test(hex) ? hex : null;
 }
 
 const VARIANT_SPEC_BLOCKLIST = new Set([
@@ -324,7 +336,7 @@ function adaptAiCar(
 const SPECS_PREVIEW_COUNT = 12;
 
 /** Offset anchor scroll for fixed header + sticky subnav. */
-const ANCHOR_SCROLL_CLASS = "scroll-mt-32 sm:scroll-mt-36";
+const ANCHOR_SCROLL_CLASS = "scroll-mt-36 sm:scroll-mt-40";
 
 /** Readable type scale: eyebrow ≥12px, section titles ~20–24px, body 14–16px. */
 const EYEBROW = "text-xs font-semibold uppercase tracking-[0.16em] text-[#1E3A8A]";
@@ -369,6 +381,11 @@ export function LiveModelDetailView(props: Props) {
     maxPrice,
     detailFields,
     variants,
+    modelImages = [],
+    modelColors = [],
+    specGroups = [],
+    featureGroups = [],
+    reviews = [],
   } = props;
 
   const { data: taxonomy } = useQuery({
@@ -477,7 +494,26 @@ export function LiveModelDetailView(props: Props) {
   const selectedVariantDisplayName = String(
     selectedVariant.variant_name ?? selectedVariant.name ?? ""
   ).trim();
-  const featureBlocks = (selectedVariant.features ?? {}) as VariantFeatureMap;
+  const modelFeatureBlocks = useMemo(() => {
+    const blocks: VariantFeatureMap = {};
+    for (const group of featureGroups) {
+      const features = Array.isArray(group.features) ? (group.features as Record<string, unknown>[]) : [];
+      for (const feature of features) {
+        const key = String(feature.key ?? "").trim().toLowerCase();
+        const value = feature.value;
+        if (!key || !value || typeof value !== "object") continue;
+        const source = value as Record<string, unknown>;
+        if (!blocks[key]) blocks[key] = {};
+        for (const [featureKey, featureValue] of Object.entries(source)) {
+          const normalized = String(featureValue ?? "").trim();
+          if (!normalized) continue;
+          if (!blocks[key][featureKey]) blocks[key][featureKey] = normalized;
+        }
+      }
+    }
+    return blocks;
+  }, [featureGroups]);
+  const featureBlocks = ((selectedVariant.features as VariantFeatureMap | undefined) ?? modelFeatureBlocks) as VariantFeatureMap;
   const featureOrder = ["comfort and convenience", "safety and security", "infotainment", "interior", "exterior"];
   const sortedFeatureCategories = [
     ...featureOrder.filter((category) => Object.prototype.hasOwnProperty.call(featureBlocks, category)),
@@ -509,13 +545,26 @@ export function LiveModelDetailView(props: Props) {
     return new Set(values).size > 1;
   });
   // Keep the hero image anchored to model-level primary photo; variant imagery remains in gallery cards.
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState<string>("");
   const selectedVariantImage = String(
-    heroImage || selectedVariant.hero_image_url || selectedVariant.image_url || selectedVariant.thumbnail_url || ""
+    selectedGalleryImage ||
+      heroImage ||
+      selectedVariant.hero_image_url ||
+      selectedVariant.image_url ||
+      selectedVariant.thumbnail_url ||
+      ""
   );
-  const navItems = CAR_DETAIL_NAV;
+  const navItems = useMemo(
+    () => CAR_DETAIL_NAV.filter((item) => item.id !== "images" && item.id !== "colours"),
+    []
+  );
+  const navItemIds = useMemo(() => new Set(navItems.map((item) => item.id)), [navItems]);
   const [activeSection, setActiveSection] = useState<string>("overview");
-  const [specsExpanded, setSpecsExpanded] = useState(false);
+  const [specsExpanded, setSpecsExpanded] = useState(true);
+  const [showSectionNav, setShowSectionNav] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const lastScrollYRef = useRef(0);
+  const hashNavigationReadyRef = useRef(false);
   const selectedVariantFields = useMemo(() => {
     const entries = Object.entries(selectedVariant).filter(([key, value]) => {
       if (VARIANT_SPEC_BLOCKLIST.has(key)) return false;
@@ -539,10 +588,57 @@ export function LiveModelDetailView(props: Props) {
     });
   }, [selectedVariant, labelMaps]);
 
-  const hasCatalogueGalleryUrls = useMemo(
-    () => variants.some((v) => Boolean(String(v.hero_image_url ?? v.image_url ?? v.thumbnail_url ?? "").trim())),
-    [variants]
+  const sortedModelImages = useMemo(
+    () => {
+      const isLogoLike = (url: string, alt: string) => {
+        const probe = `${url} ${alt}`.toLowerCase();
+        return probe.includes("logo");
+      };
+
+      const byUrl = new Map<string, { id: string; url: string; alt: string }>();
+      const push = (entry: { id: string; url: string; alt: string }) => {
+        const url = entry.url.trim();
+        if (!url || isLogoLike(url, entry.alt)) return;
+        if (!byUrl.has(url)) byUrl.set(url, entry);
+      };
+
+      // Prefer color-linked images first for a clean, interactive gallery.
+      for (const color of modelColors) {
+        const colorName = String(color.name ?? "").trim();
+        const colorImages = Array.isArray(color.images) ? (color.images as Record<string, unknown>[]) : [];
+        for (const image of colorImages) {
+          push({
+            id: String(image.id ?? `${color.id ?? colorName}-${image.sort_order ?? ""}`),
+            url: String(image.url ?? "").trim(),
+            alt: String(image.alt_text ?? `${brand} ${model} - ${colorName}`),
+          });
+        }
+        const fallbackColorUrl = String(color.image_url ?? "").trim();
+        if (fallbackColorUrl) {
+          push({
+            id: String(color.id ?? colorName || fallbackColorUrl),
+            url: fallbackColorUrl,
+            alt: `${brand} ${model} - ${colorName || "Colour"}`,
+          });
+        }
+      }
+
+      for (const img of [...modelImages].sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))) {
+        push({
+          id: String(img.id ?? ""),
+          url: String(img.url ?? "").trim(),
+          alt: String(img.alt_text ?? `${brand} ${model}`),
+        });
+      }
+
+      return [...byUrl.values()];
+    },
+    [modelImages, modelColors, brand, model]
   );
+  const hasCatalogueGalleryUrls = useMemo(() => {
+    if (sortedModelImages.length > 0) return true;
+    return variants.some((v) => Boolean(String(v.hero_image_url ?? v.image_url ?? v.thumbnail_url ?? "").trim()));
+  }, [variants, sortedModelImages]);
 
   const variantCore = useMemo(() => {
     const specLabel = (canonicalKey: string, fallback: string) =>
@@ -647,27 +743,102 @@ export function LiveModelDetailView(props: Props) {
   }, [selectedSlug, navItems]);
 
   useEffect(() => {
-    setSpecsExpanded(false);
+    if (typeof window === "undefined") return;
+    const sectionOffset = 128;
+    const updateActiveSectionByScroll = () => {
+      const y = window.scrollY + sectionOffset;
+      let current = navItems[0]?.id ?? "overview";
+      for (const item of navItems) {
+        const el = sectionRefs.current[item.id];
+        if (!el) continue;
+        if (el.offsetTop <= y) current = item.id;
+      }
+      if (current && current !== activeSection) setActiveSection(current);
+    };
+    updateActiveSectionByScroll();
+    window.addEventListener("scroll", updateActiveSectionByScroll, { passive: true });
+    window.addEventListener("resize", updateActiveSectionByScroll);
+    return () => {
+      window.removeEventListener("scroll", updateActiveSectionByScroll);
+      window.removeEventListener("resize", updateActiveSectionByScroll);
+    };
+  }, [activeSection, navItems]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !hashNavigationReadyRef.current) return;
+    if (!activeSection || !navItemIds.has(activeSection)) return;
+    const nextHash = `#${activeSection}`;
+    if (window.location.hash === nextHash) return;
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${nextHash}`);
+  }, [activeSection, navItemIds]);
+
+  useEffect(() => {
+    setSpecsExpanded(true);
   }, [selectedSlug]);
 
-  const [showStickyPriceStrip, setShowStickyPriceStrip] = useState(false);
   useEffect(() => {
-    const onScroll = () => setShowStickyPriceStrip(window.scrollY > 320);
+    setSelectedGalleryImage(sortedModelImages[0]?.url ?? "");
+  }, [sortedModelImages]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      const down = y > lastScrollYRef.current;
+      const up = y < lastScrollYRef.current;
+      lastScrollYRef.current = y;
+      if (y < 140) {
+        setShowSectionNav(false);
+        return;
+      }
+      if (down) setShowSectionNav(true);
+      if (up) setShowSectionNav(false);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const scrollToHashSection = (rawHash: string, behavior: ScrollBehavior = "smooth") => {
+      const hash = rawHash.replace(/^#/, "").trim();
+      if (!hash || !navItemIds.has(hash)) return false;
+      const target = sectionRefs.current[hash];
+      if (!target) return false;
+      const y = target.getBoundingClientRect().top + window.scrollY - 108;
+      window.scrollTo({ top: Math.max(0, y), behavior });
+      setActiveSection(hash);
+      return true;
+    };
+
+    let retries = 0;
+    const tryInitialHashScroll = () => {
+      const ok = scrollToHashSection(window.location.hash, "auto");
+      if (ok || retries >= 10) {
+        hashNavigationReadyRef.current = true;
+        return;
+      }
+      retries += 1;
+      window.setTimeout(tryInitialHashScroll, 50);
+    };
+    tryInitialHashScroll();
+
+    const onHashChange = () => {
+      scrollToHashSection(window.location.hash, "smooth");
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [navItemIds]);
 
   const visibleVariantFields =
     specsExpanded || selectedVariantFields.length <= SPECS_PREVIEW_COUNT
       ? selectedVariantFields
       : selectedVariantFields.slice(0, SPECS_PREVIEW_COUNT);
 
-  const showStickyPriceBar =
-    showStickyPriceStrip && Boolean(catalogueVariantId) && compareTrayCount === 0;
+  const showStickyPriceBar = false;
 
   return (
-    <div className={cn("relative min-w-0 bg-[#F7F8FA] pb-20 text-[#111827]", showStickyPriceBar && "pb-28")}>
+    <div className="relative min-w-0 bg-[#F7F8FA] px-2 sm:px-3 pb-12 text-[#111827]">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-[min(420px,45vh)] bg-[radial-gradient(ellipse_80%_55%_at_100%_0%,rgba(30,58,138,0.06),transparent_58%),radial-gradient(ellipse_55%_40%_at_0%_100%,rgba(249,115,22,0.04),transparent_52%)]"
         aria-hidden
@@ -703,121 +874,146 @@ export function LiveModelDetailView(props: Props) {
                     {String(selectedVariant.variant_name ?? selectedVariant.name ?? "Choose a variant below")}
                   </p>
                 </div>
-                <div className="border-t border-[#E5E7EB] bg-linear-to-b from-[#F8FAFC] via-white to-[#FAFBFC] px-4 py-4 sm:px-5 sm:py-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className={EYEBROW}>Specs preview</p>
-                      <p className="mt-1 text-[0.6875rem] leading-snug text-[#64748B] sm:text-xs">
-                        Key numbers for this trim
-                      </p>
-                    </div>
-                    <a
-                      href="#specs"
-                      className="shrink-0 rounded-lg bg-white/80 px-2.5 py-1.5 text-xs font-semibold text-[#C2410C] shadow-sm ring-1 ring-[#E5E7EB] transition hover:bg-[#FFF7ED] hover:ring-[#F97316]/35 sm:text-sm"
-                    >
-                      View all
-                    </a>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
-                    {heroQuickStats.map((item) => {
-                      const Icon = statIcon(item.key);
-                      const vis = { ...DEFAULT_HERO_STAT_VISUAL, ...HERO_STAT_VISUAL[item.key] };
-                      return (
-                        <div
-                          key={item.key}
-                          className={cn(
-                            "group relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E2E8F0]/90 bg-white p-2.5 shadow-[0_6px_20px_-10px_rgba(15,23,42,0.12)] ring-1 ring-[#F1F5F9]",
-                            "transition-[transform,box-shadow,border-color] duration-200",
-                            "hover:-translate-y-0.5 hover:border-[#1E3A8A]/20 hover:shadow-[0_12px_28px_-12px_rgba(30,58,138,0.18)]",
-                            "motion-reduce:transform-none motion-reduce:hover:translate-y-0"
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              "pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-linear-to-r opacity-95",
-                              vis.bar
-                            )}
-                            aria-hidden
-                          />
-                          <div className="flex shrink-0 items-start justify-between gap-2 pt-0.5">
-                            <span
-                              className={cn(
-                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]",
-                                vis.wrap
-                              )}
-                            >
-                              <Icon className={cn("h-4 w-4", vis.icon)} aria-hidden />
-                            </span>
-                          </div>
-                          <p
-                            className="mt-1.5 line-clamp-2 text-[0.625rem] font-semibold uppercase leading-tight tracking-[0.06em] text-[#64748B] sm:text-[0.6875rem] sm:tracking-[0.05em]"
-                            title={item.label}
-                          >
-                            {item.label}
-                          </p>
-                          <p className="mt-1 font-display text-[0.875rem] font-bold tabular-nums leading-none tracking-tight text-[#0F172A] sm:text-[0.9375rem]">
-                            {item.value}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
 
-              <div className="relative flex min-h-[260px] flex-1 flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm lg:min-h-0">
-                <div className="pointer-events-none space-y-6 p-5 opacity-[0.65] blur-[2.5px] sm:p-7 sm:pb-8">
-            <div>
+              <div className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm">
+                <div className="space-y-6 p-5 sm:p-7 sm:pb-8">
+                  <div className="rounded-2xl border border-[#E5E7EB] bg-[#FAFBFC] p-4 sm:p-5">
                     <p className={EYEBROW}>Gallery</p>
-                    <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                      {variants.slice(0, 6).map((v, i) => {
-                        const src = String(v.hero_image_url ?? v.image_url ?? v.thumbnail_url ?? heroImage);
+                    <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {(sortedModelImages.length > 0 ? sortedModelImages : variants).map((v, i) => {
+                        const src =
+                          "url" in v
+                            ? String(v.url ?? "")
+                            : String((v as LiveVariant).hero_image_url ?? (v as LiveVariant).image_url ?? (v as LiveVariant).thumbnail_url ?? heroImage);
                         return (
-                          <div
-                            key={String(v.slug ?? v.id ?? i)}
-                            className="relative h-14 w-[4.5rem] shrink-0 overflow-hidden rounded-lg border border-[#E5E7EB] bg-[#F3F4F6]"
+                          <button
+                            key={String(("id" in v ? v.id : (v as LiveVariant).slug ?? (v as LiveVariant).id) ?? i)}
+                            type="button"
+                            onClick={() => setSelectedGalleryImage(src)}
+                            className={cn(
+                              "group relative h-16 w-20 shrink-0 overflow-hidden rounded-xl border bg-[#F3F4F6] shadow-sm transition",
+                              selectedGalleryImage === src
+                                ? "border-[#1E3A8A] ring-2 ring-[#1E3A8A]/20"
+                                : "border-[#E5E7EB] hover:border-[#CBD5E1]"
+                            )}
                           >
                             <RemoteImageWithFallback
                               src={src || exteriorFallbackForKey(`${brand}-${model}`)}
                               alt=""
                               fill
-                              className="object-cover"
-                              sizes="72px"
+                              className="object-cover transition duration-200 group-hover:scale-[1.03]"
+                              sizes="80px"
                             />
-            </div>
+            </button>
                         );
                       })}
             </div>
                   </div>
-                  <div>
+                  <div className="rounded-2xl border border-[#E5E7EB] bg-[#FAFBFC] p-4 sm:p-5">
                     <p className={EYEBROW}>Colours</p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      {[
-                        "from-slate-700 to-slate-900",
-                        "from-zinc-400 to-zinc-600",
-                        "from-red-700 to-red-900",
-                        "from-blue-800 to-blue-950",
-                        "from-emerald-700 to-emerald-900",
-                        "from-amber-400 to-amber-600",
-                      ].map((g, i) => (
-                        <span
-                          key={g}
-                          className={cn(
-                            "h-11 w-11 rounded-full bg-linear-to-br shadow-inner ring-2 ring-offset-2",
-                            g,
-                            i === 0 ? "ring-[#1E3A8A] ring-offset-white" : "ring-transparent ring-offset-white"
-                          )}
-                          aria-hidden
-                        />
-                      ))}
+                    <div className="mt-4 flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {(modelColors.length ? modelColors : [{ name: "Default" }]).map((c, i) => {
+                        const colorName = String(c.name ?? "");
+                        const colorNameLc = colorName.toLowerCase();
+                        const hex = normalizeHexColor(c.hex_code);
+                        const colorImages = Array.isArray(c.images) ? (c.images as Record<string, unknown>[]) : [];
+                        const preferredImage =
+                          String(colorImages[0]?.url ?? "").trim() ||
+                          String(c.image_url ?? "").trim() ||
+                          sortedModelImages.find((img) => img.alt.toLowerCase().includes(colorNameLc))?.url ||
+                          "";
+                        const active = Boolean(preferredImage) && selectedGalleryImage === preferredImage;
+                        return (
+                          <button
+                            key={String(c.id ?? c.name ?? i)}
+                            type="button"
+                            onClick={() => {
+                              if (preferredImage) setSelectedGalleryImage(preferredImage);
+                            }}
+                            className={cn(
+                              "inline-flex shrink-0 items-center gap-2 rounded-full border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1.5 text-xs font-medium text-[#111827]",
+                              active && "border-[#1E3A8A] bg-[#EEF2FF] text-[#1E3A8A]",
+                              !hex && "bg-[#F3F4F6]"
+                            )}
+                          >
+                            <span
+                              aria-hidden
+                              className={cn(
+                                "h-3.5 w-3.5 rounded-full border border-black/10",
+                                !hex && "grid place-items-center bg-white text-[8px] font-bold uppercase text-[#6B7280]"
+                              )}
+                              style={hex ? { backgroundColor: hex } : undefined}
+                            >
+                              {!hex ? "A" : null}
+                            </span>
+                            {String(c.name ?? `Color ${i + 1}`)}
+                          </button>
+                        );
+                      })}
             </div>
                   </div>
+                  <div className="rounded-2xl border border-[#E5E7EB] bg-linear-to-b from-[#F8FAFC] via-white to-[#FAFBFC] p-4 sm:p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className={EYEBROW}>Specs preview</p>
+                        <p className="mt-1 text-[0.6875rem] leading-snug text-[#64748B] sm:text-xs">
+                          Key numbers for this trim
+                        </p>
+                      </div>
+                      <a
+                        href="#specs"
+                        className="shrink-0 rounded-lg bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-[#C2410C] shadow-sm ring-1 ring-[#E5E7EB] transition hover:bg-[#FFF7ED] hover:ring-[#F97316]/35 sm:text-sm"
+                      >
+                        View all
+                      </a>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+                      {heroQuickStats.map((item) => {
+                        const Icon = statIcon(item.key);
+                        const vis = { ...DEFAULT_HERO_STAT_VISUAL, ...HERO_STAT_VISUAL[item.key] };
+                        return (
+                          <div
+                            key={item.key}
+                            className={cn(
+                              "group relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E2E8F0]/90 bg-white p-2.5 shadow-[0_6px_20px_-10px_rgba(15,23,42,0.12)] ring-1 ring-[#F1F5F9]",
+                              "transition-[transform,box-shadow,border-color] duration-200",
+                              "hover:-translate-y-0.5 hover:border-[#1E3A8A]/20 hover:shadow-[0_12px_28px_-12px_rgba(30,58,138,0.18)]",
+                              "motion-reduce:transform-none motion-reduce:hover:translate-y-0"
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-linear-to-r opacity-95",
+                                vis.bar
+                              )}
+                              aria-hidden
+                            />
+                            <div className="flex shrink-0 items-start justify-between gap-2 pt-0.5">
+                              <span
+                                className={cn(
+                                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]",
+                                  vis.wrap
+                                )}
+                              >
+                                <Icon className={cn("h-4 w-4", vis.icon)} aria-hidden />
+                              </span>
+                            </div>
+                            <p
+                              className="mt-1.5 line-clamp-2 text-[0.625rem] font-semibold uppercase leading-tight tracking-[0.06em] text-[#64748B] sm:text-[0.6875rem] sm:tracking-[0.05em]"
+                              title={item.label}
+                            >
+                              {item.label}
+                            </p>
+                            <p className="mt-1 font-display text-[0.875rem] font-bold tabular-nums leading-none tracking-tight text-[#0F172A] sm:text-[0.9375rem]">
+                              {item.value}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-                <DataAvailableSoonOverlay
-                  variant="soft"
-                  minHeight="min-h-[260px]"
-                  sectionLabel="Gallery & colours"
-                />
               </div>
             </div>
 
@@ -1111,14 +1307,19 @@ export function LiveModelDetailView(props: Props) {
       </section>
       </div>
 
-      <div className="sticky top-14 z-40 mt-6 border-b border-[#E5E7EB] bg-[#F7F8FA]/95 pb-0 pt-1 backdrop-blur-md supports-[backdrop-filter]:bg-[#F7F8FA]/90 sm:top-16">
+      <div
+        className={cn(
+          "sticky top-14 z-40 mt-4 border-b border-[#E5E7EB] bg-[#F7F8FA]/95 pb-0 pt-1 backdrop-blur-md transition-transform duration-200 supports-[backdrop-filter]:bg-[#F7F8FA]/90 sm:top-16",
+          showSectionNav ? "translate-y-0" : "-translate-y-[120%]"
+        )}
+      >
       <nav
         className={cn(
           "rounded-t-xl border border-b-0 border-[#E5E7EB] bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.06)] supports-[backdrop-filter]:bg-white/92"
         )}
         aria-label="Section navigation"
       >
-        <div className="mx-auto max-w-[min(100%,92rem)] px-3 py-3 sm:px-5 sm:py-3 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-3 lg:px-8">
           <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-2.5">
             {navItems.map((item) => {
               const active = activeSection === item.id;
@@ -1126,6 +1327,19 @@ export function LiveModelDetailView(props: Props) {
               <a
                 key={item.id}
                 href={`#${item.id}`}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    const target = sectionRefs.current[item.id];
+                    if (!target) return;
+                    const y = target.getBoundingClientRect().top + window.scrollY - 108;
+                    window.history.replaceState(
+                      null,
+                      "",
+                      `${window.location.pathname}${window.location.search}#${item.id}`
+                    );
+                    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+                    setActiveSection(item.id);
+                  }}
                   className={cn(
                     "inline-flex min-h-10 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold tracking-tight transition-all sm:min-h-11 sm:px-4 sm:text-sm",
                     active
@@ -1149,7 +1363,7 @@ export function LiveModelDetailView(props: Props) {
         id="pricing"
         className={cn("mx-auto max-w-[min(100%,92rem)] px-4 py-6 sm:px-6 lg:px-8", ANCHOR_SCROLL_CLASS)}
       >
-        <header className="mb-8 max-w-3xl">
+        <header className="mb-5 max-w-3xl">
           <p className={EYEBROW}>Price</p>
           <h2 className={cn(SECTION_TITLE, "mt-2")}>Pricing &amp; ownership</h2>
           <p className="mt-3 text-sm leading-relaxed text-[#4B5563] sm:text-base">
@@ -1206,7 +1420,7 @@ export function LiveModelDetailView(props: Props) {
           </Card>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-5">
           <LiveModelPricingInsights
             variantId={selectedVariant.id ? String(selectedVariant.id) : undefined}
             fuelTypeLabel={String(selectedVariant.fuel_type ?? fuel)}
@@ -1224,7 +1438,7 @@ export function LiveModelDetailView(props: Props) {
           sectionRefs.current.variants = el;
         }}
         id="variants"
-        className={cn("mx-auto max-w-[min(100%,92rem)] px-4 pt-5 sm:px-6 sm:pt-6 lg:px-8", ANCHOR_SCROLL_CLASS)}
+        className={cn("mx-auto max-w-[min(100%,92rem)] px-4 pt-3 sm:px-6 sm:pt-4 lg:px-8", ANCHOR_SCROLL_CLASS)}
       >
         <div className="relative overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_12px_40px_-28px_rgba(15,23,42,0.12)]">
           <div className="relative border-b border-[#E5E7EB] bg-[#F7F8FA] px-4 py-4 sm:px-6 sm:py-5">
@@ -1349,7 +1563,7 @@ export function LiveModelDetailView(props: Props) {
                     </div>
                     <div
                       className={cn(
-                        "relative mt-3 min-h-[4.5rem] border-t border-dashed pt-3",
+                        "relative mt-3 border-t border-dashed pt-3",
                         isActive ? "border-white/20" : "border-[#E5E7EB]"
                       )}
                     >
@@ -1427,6 +1641,55 @@ export function LiveModelDetailView(props: Props) {
               })}
             </div>
             )}
+            {specGroups.length > 0 ? (
+              <div className="mt-6 rounded-2xl border border-[#E5E7EB] bg-[#FAFBFC] p-4 sm:p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">All API spec groups</p>
+                  <Badge className="rounded-full border-[#E5E7EB] bg-white px-3 py-1 text-xs font-semibold text-[#374151]">
+                    {specGroups.reduce((acc, group) => acc + (Array.isArray(group.specs) ? group.specs.length : 0), 0)} entries
+                  </Badge>
+                </div>
+                <Accordion type="multiple" className="mt-3 space-y-2">
+                  {specGroups.map((group, i) => {
+                    const groupName = String(group.group ?? `group-${i}`);
+                    const rows = Array.isArray(group.specs) ? (group.specs as Record<string, unknown>[]) : [];
+                    return (
+                      <AccordionItem
+                        key={`${groupName}-${i}`}
+                        value={`${groupName}-${i}`}
+                        className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white"
+                      >
+                        <AccordionTrigger className="px-4 py-3 text-left text-sm font-semibold text-[#111827] hover:no-underline">
+                          <span className="inline-flex items-center gap-2">
+                            {featureCategoryTitle(groupName)}
+                            <span className="rounded-full bg-[#EEF2FF] px-2 py-0.5 text-xs font-medium text-[#1E3A8A]">
+                              {rows.length}
+                            </span>
+                          </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="border-t border-[#EEF2F7] px-4 py-3">
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {rows.map((row, idx) => (
+                              <div
+                                key={`${groupName}-${idx}`}
+                                className="rounded-lg border border-[#EEF2F7] bg-[#FAFBFC] px-3 py-2.5"
+                              >
+                                <p className="text-xs font-medium text-[#64748B]">
+                                  {String(row.display_name ?? row.key ?? row.spec_key ?? "Spec")}
+                                </p>
+                                <p className="mt-1 text-sm font-semibold leading-snug text-[#0F172A]">
+                                  {String(row.value ?? row.spec_value ?? "—")}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
@@ -1581,34 +1844,6 @@ export function LiveModelDetailView(props: Props) {
           <Button variant="outline" className="mt-6 min-h-12 rounded-xl px-5 text-base font-semibold" asChild>
             <a href="#specs">Full specifications</a>
           </Button>
-        </div>
-      </section>
-
-      <section
-        ref={(el) => {
-          sectionRefs.current.colours = el;
-        }}
-        id="colours"
-        className={cn("mx-auto max-w-[min(100%,92rem)] px-4 py-4 sm:px-6 lg:px-8", ANCHOR_SCROLL_CLASS)}
-      >
-        <div className="relative min-h-[200px] overflow-hidden rounded-3xl border border-[#E5E7EB] bg-white p-6 sm:p-8">
-          <div className="pointer-events-none select-none blur-[2px] opacity-50">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F7F8FA]">
-                <Palette className="h-6 w-6 text-[#9CA3AF]" aria-hidden />
-              </span>
-              <div>
-                <h2 className="font-display text-lg font-bold text-[#111827] sm:text-xl">Colours</h2>
-                <p className="mt-2 text-sm text-[#4B5563] sm:text-base">Exterior and interior options from the catalogue.</p>
-              </div>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className="inline-flex h-9 min-w-[7rem] rounded-full border border-[#E5E7EB] bg-[#F7F8FA]" />
-              ))}
-            </div>
-          </div>
-          <DataAvailableSoonOverlay minHeight="min-h-[200px]" sectionLabel="Colours" />
         </div>
       </section>
 
@@ -1820,63 +2055,6 @@ export function LiveModelDetailView(props: Props) {
 
       <section
         ref={(el) => {
-          sectionRefs.current.images = el;
-        }}
-        id="images"
-        className={cn("mx-auto max-w-[min(100%,92rem)] px-4 py-8 sm:px-6 lg:px-8", ANCHOR_SCROLL_CLASS)}
-      >
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className={EYEBROW}>Gallery</p>
-            <h2 className={cn(SECTION_TITLE, "mt-2")}>Images</h2>
-            <p className="mt-3 text-sm text-[#4B5563] sm:text-base">Catalogue photos by trim. Pick a trim in Variants to refresh.</p>
-          </div>
-        </div>
-        <div className="relative min-h-[200px]">
-          <div
-            className={cn(
-              "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4",
-              !hasCatalogueGalleryUrls && "pointer-events-none select-none blur-[2px] opacity-50"
-            )}
-          >
-            {variants.slice(0, 8).map((v, idx) => {
-              const src = String(v.hero_image_url ?? v.image_url ?? v.thumbnail_url ?? heroImage);
-              const id = String(v.slug ?? v.id ?? idx);
-              const active = id === String(selectedVariant.slug ?? selectedVariant.id ?? "");
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setSelectedSlug(id)}
-                  className={cn(
-                    "group relative aspect-4/3 overflow-hidden rounded-2xl border text-left transition",
-                    active ? "border-emerald-500 ring-2 ring-emerald-500/25" : "border-border/60 hover:border-border"
-                  )}
-                >
-                  <RemoteImageWithFallback
-                    src={src || exteriorFallbackForKey(`${brand}-${model}`)}
-                    alt={String(v.variant_name ?? v.name ?? model)}
-                    fill
-                    className="object-cover transition duration-300 group-hover:scale-[1.03]"
-                    sizes="(max-width:640px) 50vw, 25vw"
-                  />
-                  <span className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent px-2 py-2">
-                    <span className="line-clamp-2 text-xs font-medium text-white sm:text-sm">
-                      {String(v.variant_name ?? v.name ?? "Variant")}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {!hasCatalogueGalleryUrls ? (
-            <DataAvailableSoonOverlay minHeight="min-h-[200px]" sectionLabel="Images" />
-          ) : null}
-        </div>
-      </section>
-
-      <section
-        ref={(el) => {
           sectionRefs.current.video = el;
         }}
         id="video"
@@ -1914,10 +2092,31 @@ export function LiveModelDetailView(props: Props) {
           sectionRefs.current.reviews = el;
         }}
         id="reviews"
-        className={cn("mx-auto max-w-[min(100%,92rem)] px-4 py-8 sm:px-6 lg:px-8", ANCHOR_SCROLL_CLASS)}
+        className={cn("mx-auto max-w-[min(100%,92rem)] px-4 py-6 sm:px-6 lg:px-8", ANCHOR_SCROLL_CLASS)}
       >
-        <div className="relative min-h-[180px] overflow-hidden rounded-3xl border border-[#E5E7EB] bg-white p-6 sm:p-8">
-          <div className="pointer-events-none select-none blur-[3px] opacity-50">
+        <div className="relative overflow-hidden rounded-3xl border border-[#E5E7EB] bg-white p-6 sm:p-8">
+          {reviews.length > 0 ? (
+            <>
+              <div className="flex flex-wrap items-center gap-3">
+                <Star className="h-8 w-8 text-amber-500" aria-hidden />
+                <div>
+                  <h2 className="font-display text-lg font-bold text-[#111827] sm:text-xl">Reviews</h2>
+                  <p className="mt-2 text-sm text-[#4B5563] sm:text-base">Owner and expert reviews from the catalogue feed.</p>
+                </div>
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {reviews.slice(0, 6).map((review, i) => (
+                  <article key={String(review.id ?? i)} className="rounded-2xl border border-[#E5E7EB] bg-[#F7F8FA] p-4">
+                    <p className="text-sm font-semibold text-[#111827]">{String(review.title ?? review.author ?? "Review")}</p>
+                    <p className="mt-2 text-sm text-[#4B5563]">
+                      {String(review.content ?? review.summary ?? "Review details from API.")}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="pointer-events-none select-none blur-[3px] opacity-50">
             <div className="flex flex-wrap items-center gap-3">
               <Star className="h-8 w-8 text-amber-500" aria-hidden />
               <div>
@@ -1930,7 +2129,7 @@ export function LiveModelDetailView(props: Props) {
               <div className="h-24 rounded-2xl bg-[#F7F8FA]" />
             </div>
           </div>
-          <DataAvailableSoonOverlay minHeight="min-h-[180px]" sectionLabel="Reviews" />
+          )}
         </div>
       </section>
 
@@ -2072,38 +2271,7 @@ export function LiveModelDetailView(props: Props) {
         </div>
       </section>
 
-      {showStickyPriceBar ? (
-        <div
-          className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0f172a] px-4 py-3 shadow-[0_-12px_40px_-16px_rgba(0,0,0,0.25)]"
-          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
-          role="region"
-          aria-label="Current trim price"
-        >
-          <div className="mx-auto flex max-w-[min(100%,92rem)] flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/70 sm:text-sm">
-                {brand} {model} · {tcoCity}
-              </p>
-              <p className="truncate text-sm text-white/90">{selectedVariantDisplayName || "Selected trim"}</p>
-              <p className="font-display text-xl font-bold tabular-nums text-[#FACC15] sm:text-2xl">
-                {tcoPriceLoading ? "…" : purchasePriceFromTco ? formatINR(purchasePriceFromTco) : "—"}
-              </p>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <Button className="min-h-11 rounded-xl bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#ea580c] sm:min-h-12 sm:px-5 sm:text-base" asChild>
-                <a href="#pricing">Price &amp; EMI</a>
-              </Button>
-              <Button
-                variant="secondary"
-                className="min-h-11 rounded-xl border-0 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20 sm:min-h-12 sm:px-5 sm:text-base"
-                asChild
-              >
-                <Link href="/book-expert">Expert</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {null}
     </div>
   );
 }

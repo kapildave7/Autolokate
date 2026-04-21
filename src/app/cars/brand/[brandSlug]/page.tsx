@@ -7,13 +7,13 @@ import { PageFade } from "@/components/shared/page-fade";
 import { SITE_NAME, SITE_URL } from "@/lib/seo/site";
 import { slugifyPart } from "@/lib/seo/slugs";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ brandSlug: string }> };
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_AUTOLOKATE_API_BASE_URL ??
   "https://autolokate-api-staging-2j5tqz76xa-el.a.run.app").replace(/\/$/, "");
 
-async function fetchBrandDetailsServer(slug: string): Promise<unknown | null> {
-  const response = await fetch(`${API_BASE_URL}/v1/catalogue/brands/${encodeURIComponent(slug)}`, {
+async function fetchBrandDetailsServer(brandSlug: string): Promise<unknown | null> {
+  const response = await fetch(`${API_BASE_URL}/v1/catalogue/brands/${encodeURIComponent(brandSlug)}`, {
     next: { revalidate: 60 },
   });
   if (!response.ok) return null;
@@ -29,8 +29,8 @@ function readBrandName(payload: unknown): string | undefined {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const brandDetails = await fetchBrandDetailsServer(slug);
+  const { brandSlug } = await params;
+  const brandDetails = await fetchBrandDetailsServer(brandSlug);
   const brand = readBrandName(brandDetails);
   if (!brand) return { title: "Brand not found", robots: { index: false } };
   const title = `${brand} cars for sale — browse live listings`;
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 function CarsBrandFallback() {
   return (
     <PageFade>
-        <div className="border-b border-border bg-linear-to-b from-secondary/60 to-background">
+      <div className="border-b border-border bg-linear-to-b from-secondary/60 to-background">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="h-8 w-56 animate-pulse rounded-lg bg-muted/60" />
           <div className="mt-4 h-12 w-full max-w-lg animate-pulse rounded-lg bg-muted/40" />
@@ -63,8 +63,8 @@ function CarsBrandFallback() {
 }
 
 export default async function CarBrandListingPage({ params }: Props) {
-  const { slug } = await params;
-  const brandDetails = await fetchBrandDetailsServer(slug);
+  const { brandSlug } = await params;
+  const brandDetails = await fetchBrandDetailsServer(brandSlug);
   const brand = readBrandName(brandDetails);
   if (!brand) notFound();
 

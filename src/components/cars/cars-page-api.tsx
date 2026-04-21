@@ -379,7 +379,14 @@ export function CarsPageApi({
         ) : (
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((item, idx) => {
-              const href = item.slug ? `${detailsBasePath}/${encodeURIComponent(String(item.slug))}` : "/cars/explore";
+              const modelSlug = String(item.slug ?? "").trim();
+              const brandSlug = String(item.brand_slug ?? "").trim();
+              const href =
+                modelSlug.length > 0
+                  ? brandSlug.length > 0
+                    ? `/cars/brand/${encodeURIComponent(brandSlug)}/${encodeURIComponent(modelSlug)}`
+                    : `${detailsBasePath}/${encodeURIComponent(modelSlug)}`
+                  : "/cars/explore";
               const brandLabel = pickBrandName(item);
               const modelLabel = pickModelName(item);
               const compareEntryKey = listingEntryKey(item, idx);

@@ -1,7 +1,3 @@
-/**
- * Model detail at /cars/[slug] — data is loaded on the Next.js server (RSC), not in the browser.
- * Actual catalogue calls happen in the client for easier tracking in browser Network.
- */
 import type { Metadata } from "next";
 import { LiveModelDetailLoader } from "@/components/cars/live-model-detail-loader";
 import { SEO_ENTITY } from "@/lib/seo/seo-entity";
@@ -9,15 +5,13 @@ import { fetchSeoMeta } from "@/lib/seo/seo-public-api";
 import { mergeMetadata, seoMetaResponseToMetadata } from "@/lib/seo/seo-metadata";
 import { SITE_NAME, SITE_URL } from "@/lib/seo/site";
 
-type Props = { params: Promise<{ slug: string }> };
-
-export const dynamicParams = true;
+type Props = { params: Promise<{ brandSlug: string; modelSlug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const title = `${slug.replace(/-/g, " ")} price, specs and variants | ${SITE_NAME}`;
-  const description = `Explore model details, variants, features, and latest pricing on ${SITE_NAME}.`;
-  const canonical = `${SITE_URL}/cars/${encodeURIComponent(slug)}`;
+  const { brandSlug, modelSlug } = await params;
+  const title = `${modelSlug.replace(/-/g, " ")} price, specs and variants | ${SITE_NAME}`;
+  const description = `Explore ${modelSlug.replace(/-/g, " ")} model details, variants, features, and latest pricing on ${SITE_NAME}.`;
+  const canonical = `${SITE_URL}/cars/brand/${encodeURIComponent(brandSlug)}/${encodeURIComponent(modelSlug)}`;
   const fallback: Metadata = {
     title,
     description,
@@ -27,12 +21,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: { title, description, url: canonical, type: "website", locale: "en_IN", siteName: SITE_NAME },
     twitter: { card: "summary_large_image", title, description },
   };
-  const seoRaw = await fetchSeoMeta(SEO_ENTITY.model, slug).catch(() => null);
+  const seoRaw = await fetchSeoMeta(SEO_ENTITY.model, modelSlug).catch(() => null);
   const fromApi = seoMetaResponseToMetadata(seoRaw);
   return mergeMetadata(fallback, fromApi);
 }
 
-export default async function CarDetailPage({ params }: Props) {
-  const { slug } = await params;
-  return <LiveModelDetailLoader slug={slug} />;
+export default async function CarDetailByBrandPage({ params }: Props) {
+  const { brandSlug, modelSlug } = await params;
+  return <LiveModelDetailLoader brandSlug={brandSlug} modelSlug={modelSlug} />;
 }
