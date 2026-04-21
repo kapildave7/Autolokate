@@ -1,6 +1,6 @@
 /**
  * Build in-app links for catalogue search rows (brands, models, variants).
- * Model pages live at `/cars/[modelSlug]`; brands at `/brands/[brandSlug]`.
+ * Model pages live at `/cars/[brandSlug]/[modelSlug]` (or legacy `/cars/[modelSlug]`); brands at `/brands/[brandSlug]`.
  */
 
 export function catalogueResultHref(row: Record<string, unknown>): string | null {
@@ -12,11 +12,13 @@ export function catalogueResultHref(row: Record<string, unknown>): string | null
 
   if (variantName && (modelSlug || slug)) {
     const m = modelSlug || slug;
-    return m ? `/cars/${encodeURIComponent(m)}` : null;
+    return brandSlug && m ? `/cars/${encodeURIComponent(brandSlug)}/${encodeURIComponent(m)}` : m ? `/cars/${encodeURIComponent(m)}` : null;
   }
 
   if (modelName && slug && !variantName) {
-    return `/cars/${encodeURIComponent(slug)}`;
+    return brandSlug
+      ? `/cars/${encodeURIComponent(brandSlug)}/${encodeURIComponent(slug)}`
+      : `/cars/${encodeURIComponent(slug)}`;
   }
 
   const looksLikeBrandOnly = Boolean(slug) && !modelName && !variantName;

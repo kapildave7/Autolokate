@@ -96,7 +96,7 @@ export type LiveVariant = {
 
 type Props = {
   brand: string;
-  /** Brand slug for catalogue links (e.g. /cars/brand/tata). */
+  /** Brand slug for catalogue links (e.g. /cars/tata/nexon). */
   brandSlug?: string;
   model: string;
   /** Catalogue model slug (for EV subsidy query). */

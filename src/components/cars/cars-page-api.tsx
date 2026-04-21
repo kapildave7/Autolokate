@@ -384,7 +384,7 @@ export function CarsPageApi({
               const href =
                 modelSlug.length > 0
                   ? brandSlug.length > 0
-                    ? `/cars/brand/${encodeURIComponent(brandSlug)}/${encodeURIComponent(modelSlug)}`
+                    ? `/cars/${encodeURIComponent(brandSlug)}/${encodeURIComponent(modelSlug)}`
                     : `${detailsBasePath}/${encodeURIComponent(modelSlug)}`
                   : "/cars/explore";
               const brandLabel = pickBrandName(item);

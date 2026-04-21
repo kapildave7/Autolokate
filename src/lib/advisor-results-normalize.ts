@@ -56,6 +56,9 @@ function fromAdvisorModel(m: unknown, idx: number): AdvisorMatchCard | null {
   const model_id = String(m.model_id ?? `model-${idx}`);
   const model_name = String(m.model_name ?? "Model").trim() || "Model";
   const brand_name = String(m.brand_name ?? "").trim();
+  const brand_slug = String(
+    m.brand_slug ?? (isRecord(m.brand) ? (m.brand.slug as string | undefined) : "") ?? ""
+  ).trim();
   const model_slug = String(m.model_slug ?? "").trim();
   const body_type = String(m.body_type ?? "").trim();
   const min_price = Number(m.min_price ?? 0);
@@ -91,8 +94,13 @@ function fromAdvisorModel(m: unknown, idx: number): AdvisorMatchCard | null {
     priceLabel = `From ${formatINR(ex)}`;
   }
 
-  // Use /cars/[slug] (catalogue model page). /new-cars/* is redirected to / by middleware.
-  const href = model_slug ? `/cars/${encodeURIComponent(model_slug)}` : null;
+  // Prefer canonical model route with brand segment when available.
+  const href =
+    brand_slug && model_slug
+      ? `/cars/${encodeURIComponent(brand_slug)}/${encodeURIComponent(model_slug)}`
+      : model_slug
+        ? `/cars/${encodeURIComponent(model_slug)}`
+        : null;
 
   const imageAlt = [brand_name, model_name].filter(Boolean).join(" ") || model_name;
 

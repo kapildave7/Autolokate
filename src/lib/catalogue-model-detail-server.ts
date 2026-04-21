@@ -76,7 +76,7 @@ export function buildModelSeo(payload: ModelDetailPayload) {
   const modelSlug = String(listing.slug ?? "").trim();
   const canonicalPath =
     brandSlug && modelSlug
-      ? `/cars/brand/${encodeURIComponent(brandSlug)}/${encodeURIComponent(modelSlug)}`
+      ? `/cars/${encodeURIComponent(brandSlug)}/${encodeURIComponent(modelSlug)}`
       : `/cars/${encodeURIComponent(modelSlug || model.toLowerCase().replace(/\s+/g, "-"))}`;
   const canonical = `${SITE_URL}${canonicalPath}`;
   const title = `${brand} ${model} price, specs and variants | ${SITE_NAME}`;

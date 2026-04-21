@@ -85,8 +85,12 @@ export function shouldSuppressAutoBreadcrumb(pathname: string): boolean {
   if (parts.length === 2 && parts[0] === "cars" && parts[1] !== "explore") {
     return true;
   }
-  // Canonical catalogue model path at /cars/brand/{brandSlug}/{modelSlug}
+  // Legacy catalogue model path at /cars/brand/{brandSlug}/{modelSlug}
   if (parts[0] === "cars" && parts[1] === "brand" && parts.length >= 4) {
+    return true;
+  }
+  // Canonical catalogue model path at /cars/{brandSlug}/{modelSlug}
+  if (parts[0] === "cars" && parts.length >= 3 && parts[1] !== "brand" && parts[1] !== "explore") {
     return true;
   }
 
