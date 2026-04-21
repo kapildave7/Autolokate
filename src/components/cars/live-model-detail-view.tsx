@@ -558,7 +558,7 @@ export function LiveModelDetailView(props: Props) {
     () => CAR_DETAIL_NAV.filter((item) => item.id !== "images" && item.id !== "colours"),
     []
   );
-  const navItemIds = useMemo(() => new Set(navItems.map((item) => item.id)), [navItems]);
+  const navItemIds = useMemo(() => new Set<string>(navItems.map((item) => item.id)), [navItems]);
   const [activeSection, setActiveSection] = useState<string>("overview");
   const [specsExpanded, setSpecsExpanded] = useState(true);
   const [showSectionNav, setShowSectionNav] = useState(false);
@@ -616,7 +616,7 @@ export function LiveModelDetailView(props: Props) {
         const fallbackColorUrl = String(color.image_url ?? "").trim();
         if (fallbackColorUrl) {
           push({
-            id: String(color.id ?? colorName || fallbackColorUrl),
+            id: String((color.id ?? colorName) || fallbackColorUrl),
             url: fallbackColorUrl,
             alt: `${brand} ${model} - ${colorName || "Colour"}`,
           });
