@@ -21,7 +21,6 @@ import {
   Loader2,
   ShieldCheck,
   Sparkles,
-  Video,
   Youtube,
   Zap,
 } from "lucide-react";
@@ -34,8 +33,6 @@ import { ApiError } from "@/lib/client/api-client";
 import { hasAuthTokens } from "@/lib/client/auth-storage";
 import { useAuthStore } from "@/stores/auth-store";
 import {
-  canCancelBooking,
-  isPendingPaymentBooking,
   normalizeMyBookings,
   normalizeSlotsForDate,
   type ExpertTimeSlot,
@@ -159,7 +156,7 @@ function FloatingIcons({ reduceMotion }: { reduceMotion: boolean }) {
 
 export function BookExpertPageClient() {
   const reduceMotion = useReducedMotion();
-  const { pay, paying, completePaymentForBooking } = useExpertBookingPayment();
+  const { pay, paying } = useExpertBookingPayment();
   const user = useAuthStore((s) => s.user);
   const hydrateProfile = useAuthStore((s) => s.hydrateProfile);
   const [name, setName] = useState("");
@@ -169,9 +166,7 @@ export function BookExpertPageClient() {
   const [slots, setSlots] = useState<ExpertTimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
-  const [myBookings, setMyBookings] = useState<UserBookingSummary[]>([]);
-  const [bookingsLoading, setBookingsLoading] = useState(false);
-  const [resumingBookingId, setResumingBookingId] = useState<string | null>(null);
+  const [bookingCount, setBookingCount] = useState(0);
   const [cancelTarget, setCancelTarget] = useState<UserBookingSummary | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
@@ -182,22 +177,18 @@ export function BookExpertPageClient() {
     authed && effectiveName.length > 0 && digitsOnly(effectivePhone).length >= 10
   );
   const phoneDigits = phone.replace(/\D/g, "").length;
-  const pendingBookings = myBookings.filter(isPendingPaymentBooking);
   const ready = Boolean(contactReadyForPayment && date && selectedSlot);
 
   const loadBookings = useCallback(async () => {
     if (!hasAuthTokens()) {
-      setMyBookings([]);
+      setBookingCount(0);
       return;
     }
-    setBookingsLoading(true);
     try {
       const raw = await getMyBookings();
-      setMyBookings(normalizeMyBookings(raw));
+      setBookingCount(normalizeMyBookings(raw).length);
     } catch {
-      setMyBookings([]);
-    } finally {
-      setBookingsLoading(false);
+      setBookingCount(0);
     }
   }, []);
 
@@ -265,31 +256,6 @@ export function BookExpertPageClient() {
       slotDate: date,
       slot: selectedSlot,
     });
-    void loadBookings();
-  };
-
-  const handleCompletePendingPayment = async (b: UserBookingSummary) => {
-    if (!authed || paying) return;
-    if (!contactReadyForPayment) {
-      toast.error("Add your name and mobile number above (or save them on your account).");
-      return;
-    }
-    trackEvent("book_expert_resume_payment_click", {
-      event_category: GA_CATEGORIES.conversion,
-      booking_id: b.id,
-    });
-    setResumingBookingId(b.id);
-    try {
-      await completePaymentForBooking({
-        bookingId: b.id,
-        name: effectiveName,
-        phone: effectivePhone,
-        slotDate: b.slotDate,
-        timeLabel: b.slotStartLabel,
-      });
-    } finally {
-      setResumingBookingId(null);
-    }
     void loadBookings();
   };
 
@@ -574,7 +540,9 @@ export function BookExpertPageClient() {
                   {authed ? (
                     <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-3.5 py-3">
                       <p className="text-xs font-bold uppercase tracking-wider text-emerald-200/90">Your bookings</p>
-                      <p className="mt-2 text-xs text-zinc-300">Open your dedicated history page to view active booking and all past bookings.</p>
+                      <p className="mt-2 text-xs text-zinc-300">
+                        Open your dedicated history page to view active booking and all past bookings ({bookingCount} total).
+                      </p>
                       <div className="mt-3">
                         <Button asChild variant="outline" className="h-9 border-white/15 bg-transparent text-zinc-100 hover:bg-white/5">
                           <Link href="/book-expert/bookings">View booking history</Link>

@@ -11,6 +11,7 @@ import { StickyCompareDock } from "@/components/layout/sticky-compare-dock";
 function isAuthLikePath(pathname: string | null): boolean {
   if (!pathname) return false;
   if (pathname === "/login") return true;
+  if (pathname.startsWith("/admin")) return true;
   return pathname.startsWith("/auth/");
 }
 
@@ -33,6 +34,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const minimal = isAuthLikePath(pathname);
   const bookExpertPage = isBookExpertPath(pathname);
+  const adminPath = Boolean(pathname?.startsWith("/admin"));
 
   if (minimal) {
     return (
@@ -42,7 +44,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           id="main-content"
           className="relative z-1 min-h-screen min-w-0 flex-1 touch-manipulation"
         >
-          <SitePathBreadcrumbs />
+          {!adminPath ? <SitePathBreadcrumbs /> : null}
           {children}
         </main>
       </>

@@ -55,11 +55,28 @@ export type VerifyOtpResponse = {
   is_new_user: boolean;
 };
 
+export type RefreshTokenPayload = {
+  refresh_token: string;
+};
+
+export type RefreshTokenResponse = {
+  access_token: string;
+  refresh_token?: string;
+  user?: AuthUser;
+};
+
 type VerifyOtpApiResponse =
   | VerifyOtpResponse
   | {
       success?: boolean;
       data?: VerifyOtpResponse | { user?: AuthUser; session?: { access_token?: string; refresh_token?: string; user?: AuthUser } };
+    };
+
+type RefreshTokenApiResponse =
+  | RefreshTokenResponse
+  | {
+      success?: boolean;
+      data?: RefreshTokenResponse;
     };
 
 type MeApiResponse =
@@ -139,6 +156,18 @@ export async function fetchCurrentUser(): Promise<AuthUser> {
   const maybeData = (response as { data?: AuthUser }).data;
   if (maybeData && "id" in maybeData) return maybeData;
   throw new Error("Invalid profile response");
+}
+
+export async function refreshAuthToken(payload: RefreshTokenPayload): Promise<RefreshTokenResponse> {
+  const response = await apiRequest<RefreshTokenApiResponse>("/v1/auth/refresh", {
+    method: "POST",
+    body: payload,
+    retryOnAuthFailure: false,
+  });
+
+  if ("access_token" in response) return response;
+  if (response.data && "access_token" in response.data) return response.data;
+  throw new Error("Invalid refresh token response");
 }
 
 export function completeOnboarding(payload: CompleteOnboardingPayload) {

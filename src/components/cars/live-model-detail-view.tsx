@@ -29,7 +29,6 @@ import {
   Zap,
   MousePointerClick,
   Settings2,
-  Palette,
   Star,
   CarFront,
 } from "lucide-react";
@@ -71,6 +70,7 @@ import { SeoBreadcrumbs } from "@/components/seo/breadcrumbs";
 
 type Field = { key: string; label: string; value: string };
 type VariantFeatureMap = Record<string, Record<string, string>>;
+const FEATURE_ORDER = ["comfort and convenience", "safety and security", "infotainment", "interior", "exterior"] as const;
 
 export type LiveVariant = {
   id?: string;
@@ -377,8 +377,6 @@ export function LiveModelDetailView(props: Props) {
     fuel,
     description,
     heroImage,
-    startingPrice,
-    maxPrice,
     detailFields,
     variants,
     modelImages = [],
@@ -483,13 +481,7 @@ export function LiveModelDetailView(props: Props) {
   const inCompareTray = useCompareStore((s) =>
     catalogueVariantId.length >= 8 ? s.hasVariant(catalogueVariantId) : false
   );
-  /** Hide sticky price bar when compare tray has any variants (avoid stacking with compare dock). */
-  const compareTrayCount = useCompareStore((s) => s.variantIds.length);
-  const selectedPrice = variantExShowroomPrice(selectedVariant);
   const selectedMax = toPrice(selectedVariant.max_price);
-  /** Sticky bar & fallbacks when variant row omits price but model range exists */
-  const displayExShowroom =
-    selectedPrice ?? toPrice(startingPrice) ?? toPrice(maxPrice) ?? null;
 
   const selectedVariantDisplayName = String(
     selectedVariant.variant_name ?? selectedVariant.name ?? ""
@@ -514,11 +506,13 @@ export function LiveModelDetailView(props: Props) {
     return blocks;
   }, [featureGroups]);
   const featureBlocks = ((selectedVariant.features as VariantFeatureMap | undefined) ?? modelFeatureBlocks) as VariantFeatureMap;
-  const featureOrder = ["comfort and convenience", "safety and security", "infotainment", "interior", "exterior"];
-  const sortedFeatureCategories = [
-    ...featureOrder.filter((category) => Object.prototype.hasOwnProperty.call(featureBlocks, category)),
-    ...Object.keys(featureBlocks).filter((category) => !featureOrder.includes(category)),
-  ];
+  const sortedFeatureCategories = useMemo(
+    () => [
+      ...FEATURE_ORDER.filter((category) => Object.prototype.hasOwnProperty.call(featureBlocks, category)),
+      ...Object.keys(featureBlocks).filter((category) => !FEATURE_ORDER.includes(category as (typeof FEATURE_ORDER)[number])),
+    ],
+    [featureBlocks]
+  );
   const [selectedFeatureCategory, setSelectedFeatureCategory] = useState<string>(sortedFeatureCategories[0] ?? "");
   const [featureQuery, setFeatureQuery] = useState("");
   const [diffOnly, setDiffOnly] = useState(false);
@@ -527,7 +521,7 @@ export function LiveModelDetailView(props: Props) {
     setSelectedFeatureCategory(sortedFeatureCategories[0] ?? "");
     setFeatureQuery("");
     setDiffOnly(false);
-  }, [selectedSlug]);
+  }, [selectedSlug, sortedFeatureCategories]);
   const activeFeatureCategory = sortedFeatureCategories.includes(selectedFeatureCategory)
     ? selectedFeatureCategory
     : (sortedFeatureCategories[0] ?? "");
@@ -635,11 +629,6 @@ export function LiveModelDetailView(props: Props) {
     },
     [modelImages, modelColors, brand, model]
   );
-  const hasCatalogueGalleryUrls = useMemo(() => {
-    if (sortedModelImages.length > 0) return true;
-    return variants.some((v) => Boolean(String(v.hero_image_url ?? v.image_url ?? v.thumbnail_url ?? "").trim()));
-  }, [variants, sortedModelImages]);
-
   const variantCore = useMemo(() => {
     const specLabel = (canonicalKey: string, fallback: string) =>
       labelMaps?.specByKey.get(canonicalKey)?.display_name ?? fallback;
@@ -834,8 +823,6 @@ export function LiveModelDetailView(props: Props) {
     specsExpanded || selectedVariantFields.length <= SPECS_PREVIEW_COUNT
       ? selectedVariantFields
       : selectedVariantFields.slice(0, SPECS_PREVIEW_COUNT);
-
-  const showStickyPriceBar = false;
 
   return (
     <div className="relative min-w-0 bg-[#F7F8FA] px-2 sm:px-3 pb-12 text-[#111827]">

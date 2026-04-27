@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { ACCESS_TOKEN_COOKIE_KEY } from "@/lib/auth/constants";
 import { FEATURE_FLAGS } from "@/lib/features";
 import { fetchSeoRedirect } from "@/lib/seo/seo-public-api";
 
@@ -34,6 +35,13 @@ async function maybeSeoRedirect(request: NextRequest): Promise<NextResponse | nu
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith("/admin") && pathname !== "/admin") {
+    const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE_KEY)?.value;
+    if (!accessToken) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+  }
 
   if (pathname.startsWith("/sell")) {
     return NextResponse.redirect(new URL("/", request.url));

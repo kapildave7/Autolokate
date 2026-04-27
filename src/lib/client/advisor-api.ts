@@ -55,6 +55,7 @@ type SubmitAnswerResponse = ApiEnvelope<{
   completed: boolean;
 }>;
 type ResultsResponse = ApiEnvelope<unknown>;
+type AdvisorActionResponse = ApiEnvelope<unknown>;
 
 export async function listAdvisorConversations(limit = 20): Promise<AdvisorConversation[]> {
   const res = await apiRequest<ListConversationsResponse>(`/v1/advisor/conversations?limit=${limit}`, {
@@ -62,6 +63,13 @@ export async function listAdvisorConversations(limit = 20): Promise<AdvisorConve
     auth: true,
   });
   return Array.isArray(res.data) ? res.data : [];
+}
+
+export async function archiveAdvisorConversation(conversationId: string): Promise<void> {
+  await apiRequest(`/v1/advisor/conversations/${conversationId}`, {
+    method: "DELETE",
+    auth: true,
+  });
 }
 
 export async function createAdvisorConversation(input: { vehicle_category: string; title: string }) {
@@ -106,6 +114,24 @@ export async function getAdvisorResults(conversationId: string) {
   const res = await apiRequest<ResultsResponse>(`/v1/advisor/conversations/${conversationId}/results`, {
     method: "GET",
     auth: true,
+  });
+  return res.data;
+}
+
+export async function performAdvisorAction(
+  conversationId: string,
+  input: {
+    action: "compare" | "emi";
+    model_ids?: string[];
+    variant_id?: string;
+    tenure_months?: number;
+    down_payment?: number;
+  }
+) {
+  const res = await apiRequest<AdvisorActionResponse>(`/v1/advisor/conversations/${conversationId}/actions`, {
+    method: "POST",
+    auth: true,
+    body: input,
   });
   return res.data;
 }

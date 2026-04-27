@@ -11,6 +11,16 @@ export async function getSeoPage(entityType: "brand" | "model" | "variant" | "ci
   return unbox(res);
 }
 
+export async function getSeoMeta(entityType: "brand" | "model" | "variant" | "city", slug: string) {
+  const res = await apiRequest<Envelope<unknown>>(`/v1/seo/meta/${entityType}/${slug}`);
+  return unbox(res);
+}
+
+export async function getSeoStructuredData(entityType: "brand" | "model" | "variant" | "city", slug: string) {
+  const res = await apiRequest<Envelope<unknown>>(`/v1/seo/structured-data/${entityType}/${slug}`);
+  return unbox(res);
+}
+
 export async function getSeoRedirect(path: string) {
   const res = await apiRequest<Envelope<unknown>>(`/v1/seo/redirects/${encodeURIComponent(path)}`);
   return unbox(res);
@@ -22,4 +32,8 @@ export async function getSeoRobots() {
 
 export async function getSeoSitemapIndex() {
   return apiRequest<string>("/v1/seo/sitemap");
+}
+
+export async function getSeoSitemapType(type: string) {
+  return apiRequest<string>(`/v1/seo/sitemap/${encodeURIComponent(type)}`);
 }

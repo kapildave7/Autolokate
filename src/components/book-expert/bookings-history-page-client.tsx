@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, CalendarDays, Clock3, ReceiptText, Video, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, CalendarDays, Clock3, ReceiptText, Video, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { hasAuthTokens } from "@/lib/client/auth-storage";
 import { getBookingById, getMyBookings } from "@/lib/client/booking-api";

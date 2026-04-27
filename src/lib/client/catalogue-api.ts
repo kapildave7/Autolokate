@@ -102,7 +102,7 @@ function normalizeVariant(raw: unknown): Record<string, unknown> {
   };
 }
 
-export async function getBrands(params?: { vehicle_category?: string }) {
+export async function getBrands() {
   // Backend currently rejects vehicle_category despite docs listing it as optional.
   const res = await apiRequest<Envelope<unknown[]>>("/v1/catalogue/brands");
   const rows = readArray<unknown>(unbox(res));

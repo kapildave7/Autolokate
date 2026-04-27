@@ -128,7 +128,7 @@ export function CompareView() {
   });
 
   const handleAddFromSearch = useCallback(
-    (variantId: string, _label: string) => {
+    (variantId: string, label: string) => {
       const ok = addVariant(variantId);
       if (!ok) {
         toast.message("Compare is full (max 3). Remove a variant to add another.");
@@ -136,6 +136,11 @@ export function CompareView() {
         return;
       }
       toast.success("Added to compare.");
+      trackEvent("compare_add_from_search", {
+        event_category: GA_CATEGORIES.compare,
+        variant_id: variantId,
+        label,
+      });
     },
     [addVariant]
   );

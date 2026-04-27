@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brands/brand-logo";
 import { useQuery } from "@tanstack/react-query";
-import { Car, ChevronRight, Filter, GitCompare, RotateCcw, Search, Sparkles } from "lucide-react";
+import { Car, Filter, GitCompare, RotateCcw, Search, Sparkles } from "lucide-react";
 import { getBrandModels, getModels } from "@/lib/client/catalogue-api";
 import { resolveCatalogueModelToVariantId } from "@/lib/compare-listing-resolve";
 import { slugifyPart } from "@/lib/seo/slugs";

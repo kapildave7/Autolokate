@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { toast } from "sonner";
 import {
+  archiveAdvisorConversation,
   createAdvisorConversation,
   getAdvisorConversation,
   getAdvisorCurrentStep,
@@ -145,6 +146,7 @@ export const usePreferenceFinderStore = create<PreferenceFinderState>((set, get)
   },
 
   resetJourney: async () => {
+    const previousConversationId = get().conversationId;
     set({
       conversationId: null,
       currentStep: null,
@@ -162,6 +164,10 @@ export const usePreferenceFinderStore = create<PreferenceFinderState>((set, get)
       error: null,
     });
     try {
+      // Keep history tidy: archive the prior in-progress thread before starting a fresh one.
+      if (previousConversationId) {
+        await archiveAdvisorConversation(previousConversationId).catch(() => {});
+      }
       const created = await createAdvisorConversation({ vehicle_category: "car", title: "Preference finder" });
       const selectedId = created.id;
       const initialStep = created.next_step ?? null;

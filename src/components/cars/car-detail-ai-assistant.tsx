@@ -114,7 +114,7 @@ export function CarDetailAiAssistant({ car }: { car: Car }) {
         setPending(false);
       }
     },
-    [car.id, messages, pending, hasAccess]
+    [car, messages, pending, hasAccess]
   );
 
   const locked = !hasAccess;

@@ -1,6 +1,6 @@
 "use client";
 
-import { readAuthTokens, writeAuthTokens } from "@/lib/client/auth-storage";
+import { clearAuthTokens, readAuthTokens, writeAuthTokens } from "@/lib/client/auth-storage";
 
 const DEFAULT_API_BASE_URL = "https://autolokate-api-staging-2j5tqz76xa-el.a.run.app";
 
@@ -63,6 +63,16 @@ async function refreshAccessToken(): Promise<string | null> {
   return nextAccessToken;
 }
 
+function handleAuthFailureRedirect(): void {
+  clearAuthTokens();
+  if (typeof window !== "undefined") {
+    const path = window.location.pathname;
+    if (path.startsWith("/admin") && path !== "/admin") {
+      window.location.replace("/admin");
+    }
+  }
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, auth = false, retryOnAuthFailure = true, signal } = options;
   const tokens = readAuthTokens();
@@ -82,6 +92,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     if (refreshedToken) {
       return apiRequest<T>(path, { ...options, retryOnAuthFailure: false });
     }
+    handleAuthFailureRedirect();
+  }
+
+  if (response.status === 401 && auth && !retryOnAuthFailure) {
+    handleAuthFailureRedirect();
   }
 
   return parseResponse<T>(response);
