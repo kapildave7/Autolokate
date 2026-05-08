@@ -8,6 +8,9 @@ import { usePreferenceFinderStore } from "@/stores/preference-finder-store";
 /**
  * Full-screen loader while the preference finder bootstraps (logged-in users only).
  * Hides when `ready` is true and `bootstrapping` is false so matches / wizard state are consistent.
+ *
+ * `bootstrap()` must run for logged-in home visits — it used to live in `HomeHeroPreferenceWizard`;
+ * while that section is commented out on the home page, we start the same flow here.
  */
 export function DiscoveryHomeBootstrapLoader() {
   const loggedIn = useSyncExternalStore(
@@ -15,8 +18,33 @@ export function DiscoveryHomeBootstrapLoader() {
     () => hasAuthTokens(),
     () => false
   );
+  const bootstrap = usePreferenceFinderStore((s) => s.bootstrap);
   const ready = usePreferenceFinderStore((s) => s.ready);
   const bootstrapping = usePreferenceFinderStore((s) => s.bootstrapping);
+
+  useEffect(() => {
+    if (!loggedIn) {
+      usePreferenceFinderStore.setState({
+        conversationId: null,
+        currentStep: null,
+        completed: false,
+        recentlyRestartedSession: false,
+        ready: false,
+        bootstrapping: false,
+        submitting: false,
+        error: null,
+        answerHistory: [],
+        stepMap: {},
+        cityInput: "",
+        multiDraft: [],
+        advisorResults: null,
+        promptSnapshot: { city: "", body: "", fuel: "", budget: "" },
+        pendingCompletionCelebration: false,
+      });
+      return;
+    }
+    void bootstrap();
+  }, [loggedIn, bootstrap]);
 
   const show = loggedIn && (!ready || bootstrapping);
 

@@ -1,6 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      // Auth route consolidation — canonical URLs are /login and /signup.
+      // /auth/otp carried OTP step query params; preserve them via wildcard.
+      { source: "/auth/login", destination: "/login", permanent: true },
+      { source: "/auth/signup", destination: "/signup", permanent: true },
+      {
+        source: "/auth/otp",
+        destination: "/login?step=otp",
+        permanent: true,
+        has: [{ type: "query", key: "phone" }],
+      },
+      { source: "/auth/otp", destination: "/login", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {

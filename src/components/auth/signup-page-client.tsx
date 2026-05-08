@@ -1,0 +1,263 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { type CSSProperties, type FormEvent, useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, ChevronDown, Loader2, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { useAuthStore } from "@/stores/auth-store";
+import { ApiError } from "@/lib/client/api-client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+
+const LOGO_DARK_SRC = "https://autolokate.com/autolokate_dark.png";
+const LOGO_LIGHT_SRC = "https://autolokate.com/autolokate_light.png";
+const SIGNUP_BG_DARK = "/images/login_bg_dark.png";
+const SIGNUP_BG_LIGHT = "/images/login_bg_light.png";
+
+// See login-page-client.tsx — `theme-dark-only` / `theme-light-only` set
+// `display: var(--theme-dark-display, inline-block)` in globals.css, which
+// overrides Tailwind's `inline-flex`. Inline-style this var per element.
+const INLINE_FLEX_THEME_VAR = { "--theme-dark-display": "inline-flex" } as CSSProperties;
+
+function BrandWordmark({ className }: { className?: string }) {
+  return (
+    <>
+      <Image
+        src={LOGO_DARK_SRC}
+        alt="Autolokate"
+        width={140}
+        height={36}
+        priority
+        className={cn("theme-dark-only", className)}
+      />
+      <Image
+        src={LOGO_LIGHT_SRC}
+        alt="Autolokate"
+        width={140}
+        height={36}
+        priority
+        className={cn("theme-light-only", className)}
+      />
+    </>
+  );
+}
+
+export function SignupPageClient() {
+  const router = useRouter();
+  const requestOtpCode = useAuthStore((s) => s.requestOtpCode);
+  const reduceMotion = useReducedMotion();
+
+  const [name, setName] = useState("");
+  const [localDigits, setLocalDigits] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const trimmedName = name.trim();
+    const digits = localDigits.replace(/\D/g, "").replace(/^0+/, "");
+    const normalizedPhone = `+91${digits}`;
+
+    if (trimmedName.length < 2) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+    if (digits.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await requestOtpCode(normalizedPhone);
+      if (response.sent) {
+        toast.success(response.message || "OTP sent successfully.");
+        const q = new URLSearchParams();
+        q.set("step", "otp");
+        q.set("phone", normalizedPhone);
+        router.replace(`/login?${q.toString()}`);
+      } else {
+        toast.error("Unable to send OTP. Please try again.");
+      }
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : "Unable to send OTP right now.";
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="relative min-h-screen w-full overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-zinc-950 theme-dark-only" aria-hidden />
+      <div className="theme-light-only pointer-events-none absolute inset-0 z-0 bg-zinc-100" aria-hidden />
+
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <Image
+          src={SIGNUP_BG_DARK}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="theme-dark-only object-cover object-[82%_center]"
+        />
+        <Image
+          src={SIGNUP_BG_LIGHT}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="theme-light-only object-cover object-[78%_center]"
+        />
+      </div>
+
+      <div
+        className="theme-dark-only pointer-events-none absolute inset-0 z-[1] bg-linear-to-br from-black/58 via-zinc-950/38 to-black/50"
+        aria-hidden
+      />
+      <div
+        className="theme-dark-only pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_100%_75%_at_28%_18%,rgba(59,130,246,0.14),transparent_52%)]"
+        aria-hidden
+      />
+      <div
+        className="theme-light-only pointer-events-none absolute inset-0 z-[1] bg-linear-to-br from-white/72 via-sky-50/35 to-white/62"
+        aria-hidden
+      />
+      <div
+        className="theme-light-only pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_90%_65%_at_22%_22%,rgba(255,255,255,0.55),transparent_55%)]"
+        aria-hidden
+      />
+
+      <Link
+        href="/"
+        aria-label="Back to home"
+        style={INLINE_FLEX_THEME_VAR}
+        className="theme-dark-only absolute left-4 top-4 z-20 inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-white/12 bg-black/30 px-3.5 text-sm font-medium text-white/95 shadow-sm backdrop-blur-md transition hover:bg-black/40 hover:text-white sm:left-6 sm:top-6"
+      >
+        <ArrowLeft className="size-4 shrink-0 opacity-90" aria-hidden />
+        <span className="leading-none">Back to home</span>
+      </Link>
+      <Link
+        href="/"
+        aria-label="Back to home"
+        style={INLINE_FLEX_THEME_VAR}
+        className="theme-light-only absolute left-4 top-4 z-20 inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-zinc-200 bg-white px-3.5 text-sm font-semibold text-foreground shadow-md transition hover:bg-zinc-50 sm:left-6 sm:top-6"
+      >
+        <ArrowLeft className="size-4 shrink-0 opacity-90" aria-hidden />
+        <span className="leading-none">Back to home</span>
+      </Link>
+
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-[440px]"
+        >
+          <div className="login-auth-card text-card-foreground">
+            <div className="flex flex-col items-center text-center">
+              <Link
+                href="/"
+                className="mb-8 inline-flex outline-none ring-offset-2 ring-offset-transparent transition hover:opacity-90 focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                <BrandWordmark className="h-8 w-auto sm:h-9" />
+              </Link>
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
+                Create your account
+              </h1>
+              <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                Sign up with your mobile number — we&apos;ll send a one-time code to verify it&apos;s you.
+              </p>
+            </div>
+
+            <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="signup-name" className="text-sm font-medium text-foreground">
+                  Full name
+                </Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  placeholder="Your name"
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="h-12 rounded-xl border-border/80 bg-background px-4 text-base shadow-inner"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="signup-phone" className="text-sm font-medium text-foreground">
+                  Mobile number
+                </Label>
+                <div className="flex h-12 w-full items-center overflow-hidden rounded-xl border border-border/80 bg-background shadow-inner transition-[color,box-shadow] focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/30">
+                  <div
+                    className="flex h-full shrink-0 items-center gap-1.5 border-r border-border/70 bg-muted/40 px-3 text-sm font-medium text-foreground"
+                    aria-hidden
+                  >
+                    <span className="text-[1rem] leading-none">🇮🇳</span>
+                    <span className="leading-none">+91</span>
+                    <ChevronDown
+                      className="size-3.5 shrink-0 text-muted-foreground"
+                      strokeWidth={2.25}
+                      aria-hidden
+                    />
+                  </div>
+                  <Input
+                    id="signup-phone"
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="Enter mobile number"
+                    autoComplete="tel-national"
+                    value={localDigits}
+                    onChange={(e) => setLocalDigits(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    className="h-full flex-1 rounded-none border-0 bg-transparent px-4 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">We&apos;ll send a 6-digit OTP to verify your number.</p>
+              </div>
+
+              <Button
+                type="submit"
+                className="h-12 w-full gap-2 rounded-xl text-base font-semibold shadow-md [&_svg]:size-4"
+                disabled={submitting}
+                size="lg"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="animate-spin" aria-hidden />
+                    <span>Sending code…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send OTP</span>
+                    <ArrowRight aria-hidden />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="relative -mx-8 mt-9 sm:-mx-10">
+              <div className="w-full border-t border-border/55" />
+              <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-card px-1.5 py-0.5 shadow-sm">
+                <ShieldCheck className="size-3 text-primary" aria-hidden />
+              </div>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Already registered?{" "}
+              <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
+                Log in
+              </Link>
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

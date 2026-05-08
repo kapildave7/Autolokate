@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, Suspense, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,28 @@ import { cn } from "@/lib/utils";
 
 const LOGO_DARK_SRC = "https://autolokate.com/autolokate_dark.png";
 const LOGO_LIGHT_SRC = "https://autolokate.com/autolokate_light.png";
-const HERO_VIDEO_SRC = "/videos/ultra-realistic-cinematic-short-film-of-a-young-pr.mp4";
+const LOGIN_BG_DARK = "/images/login_bg_dark.png";
+const LOGIN_BG_LIGHT = "/images/login_bg_light.png";
+
+// `theme-dark-only` / `theme-light-only` set `display: var(--theme-dark-display, inline-block)`
+// in globals.css, which would otherwise override Tailwind's `flex` / `inline-flex`. These inline
+// styles set the variable per-element so the active theme renders with the correct flex display.
+const INLINE_FLEX_THEME_VAR = { "--theme-dark-display": "inline-flex" } as CSSProperties;
+const FLEX_THEME_VAR = { "--theme-dark-display": "flex" } as CSSProperties;
+
+const RESEND_COOLDOWN_SECONDS = 30;
+const OTP_LENGTH = 6;
+const OTP_CELLS = Array.from({ length: OTP_LENGTH }, (_, i) => i);
+
+/** Human-readable phone — "+918888888888" → "+91 88888 88888". Falls back to input as-is. */
+function formatPhoneDisplay(phone: string): string {
+  const trimmed = phone.trim();
+  if (/^\+91\d{10}$/.test(trimmed)) {
+    const local = trimmed.slice(3);
+    return `+91 ${local.slice(0, 5)} ${local.slice(5)}`;
+  }
+  return trimmed;
+}
 
 function BrandWordmark({ className }: { className?: string }) {
   return (
@@ -55,15 +76,14 @@ function LoginFormInner() {
   const otpPhoneStore = useAuthStore((s) => s.otpPhone);
 
   const reduceMotion = useReducedMotion();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const otpInputRef = useRef<HTMLInputElement>(null);
 
-  const [phone, setPhone] = useState("+91");
+  const [localDigits, setLocalDigits] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
-  const [videoLoadError, setVideoLoadError] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const safeNext = useSafeNext(searchParams);
   const stepParam = searchParams.get("step");
@@ -74,8 +94,15 @@ function LoginFormInner() {
   useEffect(() => {
     if (isOtpStep) {
       otpInputRef.current?.focus();
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
     }
   }, [isOtpStep]);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (stepParam === "otp" && !activePhone) {
@@ -83,37 +110,12 @@ function LoginFormInner() {
     }
   }, [stepParam, activePhone, router, safeNext]);
 
-  const showVideo = !reduceMotion && !videoLoadError;
-
-  useEffect(() => {
-    if (!showVideo) return;
-    const el = videoRef.current;
-    if (!el) return;
-    el.defaultMuted = true;
-    el.muted = true;
-    const kick = () => {
-      void el.play().catch(() => {});
-    };
-    kick();
-    const onVis = () => {
-      if (document.visibilityState === "visible") kick();
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, [showVideo]);
-
-  function kickVideoPlayback() {
-    const el = videoRef.current;
-    if (!el) return;
-    el.muted = true;
-    void el.play().catch(() => {});
-  }
-
   async function onSubmitPhone(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const normalizedPhone = phone.trim();
-    if (!normalizedPhone.startsWith("+") || normalizedPhone.length < 8) {
-      toast.error("Please enter a valid phone number with country code.");
+    const digits = localDigits.replace(/\D/g, "").replace(/^0+/, "");
+    const normalizedPhone = `+91${digits}`;
+    if (digits.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number.");
       return;
     }
 
@@ -138,20 +140,20 @@ function LoginFormInner() {
     }
   }
 
-  async function handleVerify() {
+  async function verifyCode(code: string) {
     if (!activePhone) {
       toast.error("Phone number not found. Enter your number again.");
       router.replace("/login");
       return;
     }
-    if (otp.trim().length !== 6) {
-      toast.error("Enter the 6-digit OTP.");
+    if (code.length !== OTP_LENGTH) {
+      toast.error(`Enter the ${OTP_LENGTH}-digit OTP.`);
       return;
     }
 
     setVerifying(true);
     try {
-      await verifyOtpCode(activePhone, otp.trim());
+      await verifyOtpCode(activePhone, code);
       toast.success("Logged in successfully.");
       router.push(safeNext || "/");
     } catch (error) {
@@ -162,16 +164,24 @@ function LoginFormInner() {
     }
   }
 
+  async function handleVerify() {
+    return verifyCode(otp.trim());
+  }
+
   async function handleResendOtp() {
     if (!activePhone) {
       toast.error("Phone number not found.");
       return;
     }
+    if (resendCooldown > 0) return;
 
     setResending(true);
     try {
       await requestOtpCode(activePhone);
       toast.success("OTP resent.");
+      setOtp("");
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+      otpInputRef.current?.focus();
     } catch (error) {
       const message = error instanceof ApiError ? error.message : "Unable to resend OTP.";
       toast.error(message);
@@ -182,70 +192,86 @@ function LoginFormInner() {
 
   function handleChangePhone() {
     setOtp("");
+    setLocalDigits("");
     const q = new URLSearchParams();
     if (safeNext) q.set("next", safeNext);
     router.replace(q.toString() ? `/login?${q.toString()}` : "/login");
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-zinc-950">
-      {showVideo ? (
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden bg-black" aria-hidden>
-          <video
-            key={HERO_VIDEO_SRC}
-            ref={videoRef}
-            className="absolute left-1/2 top-1/2 h-full min-h-full w-full min-w-full -translate-x-1/2 -translate-y-1/2 scale-[1.02] object-cover"
-            src={HERO_VIDEO_SRC}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            disablePictureInPicture
-            onError={() => setVideoLoadError(true)}
-            onLoadedData={kickVideoPlayback}
-            onCanPlay={kickVideoPlayback}
-          />
-        </div>
-      ) : null}
+    <div className="relative min-h-screen w-full overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-zinc-950 theme-dark-only" aria-hidden />
+      <div className="theme-light-only pointer-events-none absolute inset-0 z-0 bg-zinc-100" aria-hidden />
+
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <Image
+          src={LOGIN_BG_DARK}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="theme-dark-only object-cover object-[82%_center]"
+        />
+        <Image
+          src={LOGIN_BG_LIGHT}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="theme-light-only object-cover object-[78%_center]"
+        />
+      </div>
 
       <div
-        className="absolute inset-0 z-[1] bg-linear-to-br from-zinc-950/72 via-zinc-950/48 to-zinc-900/68"
+        className="theme-dark-only pointer-events-none absolute inset-0 z-[1] bg-linear-to-br from-black/58 via-zinc-950/38 to-black/50"
         aria-hidden
       />
       <div
-        className="absolute inset-0 z-[2] bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,rgba(255,255,255,0.08),transparent_55%)]"
+        className="theme-dark-only pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_100%_75%_at_28%_18%,rgba(59,130,246,0.14),transparent_52%)]"
         aria-hidden
       />
-      <div className="absolute inset-0 z-[3] bg-linear-to-t from-zinc-950 via-transparent to-zinc-950/35" aria-hidden />
+      <div
+        className="theme-light-only pointer-events-none absolute inset-0 z-[1] bg-linear-to-br from-white/72 via-sky-50/35 to-white/62"
+        aria-hidden
+      />
+      <div
+        className="theme-light-only pointer-events-none absolute inset-0 z-[2] bg-[radial-gradient(ellipse_90%_65%_at_22%_22%,rgba(255,255,255,0.55),transparent_55%)]"
+        aria-hidden
+      />
 
       <Link
         href="/"
-        className="absolute left-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-2 text-sm font-medium text-white/95 backdrop-blur-md transition hover:bg-black/35 hover:text-white sm:left-6 sm:top-6"
+        aria-label="Back to home"
+        style={INLINE_FLEX_THEME_VAR}
+        className="theme-dark-only absolute left-4 top-4 z-20 inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-white/12 bg-black/30 px-3.5 text-sm font-medium text-white/95 shadow-sm backdrop-blur-md transition hover:bg-black/40 hover:text-white sm:left-6 sm:top-6"
       >
-        <ArrowLeft className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
-        Back to home
+        <ArrowLeft className="size-4 shrink-0 opacity-90" aria-hidden />
+        <span className="leading-none">Back to home</span>
+      </Link>
+      <Link
+        href="/"
+        aria-label="Back to home"
+        style={INLINE_FLEX_THEME_VAR}
+        className="theme-light-only absolute left-4 top-4 z-20 inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full border border-zinc-200 bg-white px-3.5 text-sm font-semibold text-foreground shadow-md transition hover:bg-zinc-50 sm:left-6 sm:top-6"
+      >
+        <ArrowLeft className="size-4 shrink-0 opacity-90" aria-hidden />
+        <span className="leading-none">Back to home</span>
       </Link>
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-20 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-[440px]"
         >
-          <div
-            className={cn(
-              "rounded-[1.75rem] border border-white/12 bg-white/[0.97] p-8 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.45)] backdrop-blur-xl",
-              "sm:p-10"
-            )}
-          >
+          <div className="login-auth-card text-card-foreground">
             {!isOtpStep ? (
               <>
                 <div className="flex flex-col items-center text-center">
                   <Link
                     href="/"
-                    className="mb-8 inline-flex outline-none ring-offset-2 ring-offset-white transition hover:opacity-90 focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-primary/40"
+                    className="mb-8 inline-flex outline-none ring-offset-2 ring-offset-transparent transition hover:opacity-90 focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
                     <BrandWordmark className="h-8 w-auto sm:h-9" />
                   </Link>
@@ -253,53 +279,91 @@ function LoginFormInner() {
                     Sign in with OTP
                   </h1>
                   <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                    Enter your mobile number. We&apos;ll send a one-time code to verify it&apos;s you — quick and secure.
+                    Enter your mobile number and we&apos;ll send a one-time code to verify it&apos;s you — fast and
+                    secure.
                   </p>
                 </div>
 
                 <form className="mt-8 space-y-5" onSubmit={onSubmitPhone}>
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
                     <Label htmlFor="login-phone" className="text-sm font-medium text-foreground">
                       Phone number
                     </Label>
-                    <Input
-                      id="login-phone"
-                      type="tel"
-                      placeholder="+91 98123 45678"
-                      autoComplete="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="h-12 rounded-xl border-border/90 bg-background px-4 text-base shadow-inner"
-                    />
+                    <div className="group flex h-12 w-full items-center overflow-hidden rounded-xl border border-border/80 bg-background shadow-inner transition-[color,box-shadow] focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/30">
+                      <div
+                        className="flex h-full shrink-0 items-center gap-1.5 border-r border-border/70 bg-muted/40 px-3 text-sm font-medium text-foreground"
+                        aria-hidden
+                      >
+                        <span className="text-[1rem] leading-none">🇮🇳</span>
+                        <span className="leading-none">+91</span>
+                        <ChevronDown
+                          className="size-3.5 shrink-0 text-muted-foreground"
+                          strokeWidth={2.25}
+                          aria-hidden
+                        />
+                      </div>
+                      <Input
+                        id="login-phone"
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="Enter mobile number"
+                        autoComplete="tel-national"
+                        value={localDigits}
+                        onChange={(e) => setLocalDigits(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        className="h-full flex-1 rounded-none border-0 bg-transparent px-4 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                      />
+                    </div>
                     <p className="text-xs text-muted-foreground">Include country code (e.g. +91 for India).</p>
                   </div>
                   <Button
                     type="submit"
-                    className="h-12 w-full rounded-xl text-base font-semibold shadow-md"
+                    className="h-12 w-full gap-2 rounded-xl text-base font-semibold shadow-md [&_svg]:size-4"
                     disabled={loading}
                     size="lg"
                   >
                     {loading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending code…
+                        <Loader2 className="animate-spin" aria-hidden />
+                        <span>Sending code…</span>
                       </>
                     ) : (
-                      "Continue"
+                      <>
+                        <span>Continue</span>
+                        <ArrowRight aria-hidden />
+                      </>
                     )}
                   </Button>
                 </form>
 
-                <div className="mt-8 flex items-start gap-2 rounded-xl border border-border/60 bg-secondary/40 px-3 py-2.5 text-left">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                {/* <div
+                  style={FLEX_THEME_VAR}
+                  className="theme-dark-only mt-8 flex items-start gap-2.5 rounded-xl border border-white/12 bg-black/22 px-3 py-2.5 text-left backdrop-blur-sm"
+                >
+                  <ShieldCheck className="mt-[1px] size-4 shrink-0 text-primary" aria-hidden />
+                  <p className="text-[11px] leading-snug text-zinc-300">
+                    We never post on your behalf. OTPs expire quickly — same security pattern used across Autolokate.
+                  </p>
+                </div>
+                <div
+                  style={FLEX_THEME_VAR}
+                  className="theme-light-only mt-8 flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/[0.06] px-3 py-2.5 text-left"
+                >
+                  <ShieldCheck className="mt-[1px] size-4 shrink-0 text-primary" aria-hidden />
                   <p className="text-[11px] leading-snug text-muted-foreground">
                     We never post on your behalf. OTPs expire quickly — same security pattern used across Autolokate.
                   </p>
+                </div> */}
+
+                <div className="relative -mx-8 mt-9 sm:-mx-10">
+                  <div className="w-full border-t border-border/55" />
+                  <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-card px-1.5 py-0.5 shadow-sm">
+                    <ShieldCheck className="size-3 text-primary" aria-hidden />
+                  </div>
                 </div>
 
                 <p className="mt-6 text-center text-sm text-muted-foreground">
                   New here?{" "}
-                  <Link href="/auth/signup" className="font-semibold text-primary underline-offset-4 hover:underline">
+                  <Link href="/signup" className="font-semibold text-primary underline-offset-4 hover:underline">
                     Create an account
                   </Link>
                 </p>
@@ -309,72 +373,114 @@ function LoginFormInner() {
                 <div className="flex flex-col items-center text-center">
                   <Link
                     href="/"
-                    className="mb-6 inline-flex outline-none ring-offset-2 ring-offset-white transition hover:opacity-90 focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-primary/40"
+                    className="mb-7 inline-flex outline-none ring-offset-2 ring-offset-transparent transition hover:opacity-90 focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
                     <BrandWordmark className="h-8 w-auto sm:h-9" />
                   </Link>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Autolokate</p>
-                  <p className="mt-1 text-sm font-medium text-muted-foreground">Secure access</p>
-                  <h1 className="mt-5 font-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
+                  <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
                     Verify OTP
                   </h1>
                   <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                    Enter the 6-digit code sent to {activePhone}.
+                    Enter the 6-digit code sent to{" "}
+                    <span className="font-semibold text-foreground">{formatPhoneDisplay(activePhone)}</span>.
                   </p>
                 </div>
 
-                <div className="mt-8 space-y-2">
+                <form
+                  className="mt-8"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void handleVerify();
+                  }}
+                >
                   <Label htmlFor="login-otp" className="sr-only">
                     One-time password
                   </Label>
-                  <Input
-                    ref={otpInputRef}
-                    id="login-otp"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    placeholder="123456"
-                    className="h-12 rounded-xl border-border/90 bg-background px-4 text-center text-lg tracking-[0.35em] shadow-inner"
-                  />
-                  <p className="text-center text-xs text-muted-foreground">Use the OTP received on SMS to continue.</p>
-                </div>
+                  <div className="relative">
+                    <Input
+                      ref={otpInputRef}
+                      id="login-otp"
+                      type="text"
+                      value={otp}
+                      onChange={(e) => {
+                        const next = e.target.value.replace(/\D/g, "").slice(0, OTP_LENGTH);
+                        setOtp(next);
+                        if (next.length === OTP_LENGTH && !verifying) {
+                          void verifyCode(next);
+                        }
+                      }}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={OTP_LENGTH}
+                      aria-label="One-time password"
+                      className="peer absolute inset-0 z-10 h-full w-full rounded-xl border-0 bg-transparent p-0 text-center text-transparent caret-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 selection:bg-transparent"
+                    />
+                    <div className="pointer-events-none grid grid-cols-6 gap-2 sm:gap-2.5">
+                      {OTP_CELLS.map((i) => {
+                        const digit = otp[i];
+                        const isFilled = otp.length > i;
+                        const isActive = otp.length === i;
+                        return (
+                          <div
+                            key={i}
+                            className={cn(
+                              "flex h-12 items-center justify-center rounded-xl border bg-background text-lg font-semibold tabular-nums shadow-inner transition-colors sm:h-14 sm:text-xl",
+                              isActive
+                                ? "border-border/80 peer-focus:border-primary peer-focus:ring-2 peer-focus:ring-primary/30"
+                                : isFilled
+                                  ? "border-primary/40 text-foreground"
+                                  : "border-border/80 text-muted-foreground"
+                            )}
+                          >
+                            {digit ?? ""}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    Use the OTP received on SMS to continue.
+                  </p>
 
-                <Button
-                  type="button"
-                  className="mt-8 h-12 w-full rounded-xl text-base font-semibold shadow-md"
-                  size="lg"
-                  disabled={verifying}
-                  onClick={() => void handleVerify()}
-                >
-                  {verifying ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Verifying…
-                    </>
-                  ) : (
-                    "Verify & continue"
-                  )}
-                </Button>
+                  <Button
+                    type="submit"
+                    className="mt-7 h-12 w-full gap-2 rounded-xl text-base font-semibold shadow-md [&_svg]:size-4"
+                    size="lg"
+                    disabled={verifying || otp.length !== OTP_LENGTH}
+                  >
+                    {verifying ? (
+                      <>
+                        <Loader2 className="animate-spin" aria-hidden />
+                        <span>Verifying…</span>
+                      </>
+                    ) : (
+                      <span>Verify &amp; continue</span>
+                    )}
+                  </Button>
+                </form>
 
-                <p className="mt-4 text-center text-xs text-muted-foreground">
-                  Didn&apos;t receive?{" "}
+                <div className="mt-6 flex items-center justify-center gap-3 text-xs text-muted-foreground">
                   <button
                     type="button"
-                    className="font-semibold text-primary hover:underline disabled:pointer-events-none disabled:opacity-50"
+                    className="font-semibold text-primary transition hover:underline disabled:pointer-events-none disabled:text-muted-foreground"
                     onClick={() => void handleResendOtp()}
-                    disabled={resending}
+                    disabled={resending || resendCooldown > 0}
                   >
-                    {resending ? "Resending…" : "Resend code"}
+                    {resending
+                      ? "Resending…"
+                      : resendCooldown > 0
+                        ? `Resend in ${resendCooldown}s`
+                        : "Resend code"}
                   </button>
-                </p>
-                <p className="mt-2 text-center text-xs text-muted-foreground">
-                  Wrong number?{" "}
-                  <button type="button" className="font-semibold text-primary hover:underline" onClick={handleChangePhone}>
+                  <span aria-hidden className="h-3 w-px bg-border/70" />
+                  <button
+                    type="button"
+                    className="font-semibold text-primary transition hover:underline"
+                    onClick={handleChangePhone}
+                  >
                     Change phone
                   </button>
-                </p>
+                </div>
               </>
             )}
           </div>

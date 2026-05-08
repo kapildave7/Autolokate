@@ -72,7 +72,7 @@ export function AdminLoginPageClient() {
         <CardContent className="space-y-6">
           {step === "phone" ? (
             <form className="space-y-4" onSubmit={onSubmitPhone}>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="admin-phone">Phone number</Label>
                 <Input
                   id="admin-phone"
@@ -97,7 +97,7 @@ export function AdminLoginPageClient() {
             </form>
           ) : (
             <div className="space-y-4">
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="admin-otp">Enter OTP</Label>
                 <Input
                   id="admin-otp"

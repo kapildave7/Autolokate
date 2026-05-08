@@ -92,7 +92,7 @@ function toListResult(payload: ListEnvelope, params: ListAdminReviewsParams): Li
   const items = data?.items ?? data?.reviews ?? payload.items ?? payload.reviews ?? [];
   const normalizedItems = Array.isArray(items) ? items : [];
   const page = params.page ?? 1;
-  const limit = params.limit ?? normalizedItems.length || 10;
+  const limit = params.limit ?? (normalizedItems.length || 10);
   const startIndex = Math.max(0, (page - 1) * limit);
   const endIndex = startIndex + limit;
   const pagedItems = normalizedItems.slice(startIndex, endIndex);

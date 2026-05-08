@@ -117,17 +117,17 @@ export function CheckoutFlow() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
+                <div className="flex flex-col gap-2 sm:col-span-2">
                   <Label htmlFor="line1">Address line</Label>
-                  <Input id="line1" value={line1} onChange={(e) => setLine1(e.target.value)} className="mt-1" />
+                  <Input id="line1" value={line1} onChange={(e) => setLine1(e.target.value)} />
                 </div>
-                <div>
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="city">City</Label>
-                  <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1" />
+                  <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
                 </div>
-                <div>
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="pin">PIN</Label>
-                  <Input id="pin" value={pin} onChange={(e) => setPin(e.target.value)} className="mt-1" />
+                  <Input id="pin" value={pin} onChange={(e) => setPin(e.target.value)} />
                 </div>
               </CardContent>
             </Card>
@@ -136,7 +136,7 @@ export function CheckoutFlow() {
                 <CardHeader>
                   <CardTitle>Consultation details</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
+                <CardContent className="flex flex-col gap-2 text-sm">
                   <p><strong>Name:</strong> {consultName || "Not provided"}</p>
                   <p><strong>Phone:</strong> {consultPhone || "Not provided"}</p>
                   <p><strong>Date:</strong> {consultDate || "Not selected"}</p>

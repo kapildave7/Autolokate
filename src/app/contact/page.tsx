@@ -13,15 +13,15 @@ export default function ContactPage() {
       subtitle="Partnerships, product questions, and press — this form is a preview; submissions are not sent yet."
     >
       <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="org">Organization</Label>
           <Input id="org" placeholder="Company name" />
         </div>
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="email">Work email</Label>
           <Input id="email" type="email" placeholder="you@company.com" />
         </div>
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <Label htmlFor="msg">Message</Label>
           <Textarea id="msg" rows={4} placeholder="Tell us what you’re looking for — timeline, cities, volume…" />
         </div>

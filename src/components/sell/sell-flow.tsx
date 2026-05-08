@@ -90,23 +90,23 @@ export function SellFlow() {
                 <div className="space-y-4">
                   <h2 className="text-lg font-semibold text-foreground">Vehicle details</h2>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label>Brand</Label>
                       <Input value={brand} onChange={(e) => setBrand(e.target.value)} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label>Model</Label>
                       <Input value={model} onChange={(e) => setModel(e.target.value)} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label>Year</Label>
                       <Input value={year} onChange={(e) => setYear(e.target.value)} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label>Kilometers</Label>
                       <Input value={kms} onChange={(e) => setKms(e.target.value)} />
                     </div>
-                    <div className="space-y-2 sm:col-span-2">
+                    <div className="flex flex-col gap-2 sm:col-span-2">
                       <Label>Variant</Label>
                       <Select defaultValue="sx">
                         <SelectTrigger>
@@ -150,7 +150,7 @@ export function SellFlow() {
                       {formatINR(estimateRangeLow)} – {formatINR(estimateRangeHigh)}
                     </p>
                   </div>
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
                     <Label>Your asking price</Label>
                     <Input type="number" defaultValue={1200000} />
                   </div>

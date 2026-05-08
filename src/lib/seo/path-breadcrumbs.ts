@@ -77,7 +77,7 @@ export function shouldSuppressAutoBreadcrumb(pathname: string): boolean {
   }
 
   /** Sign-in and auth flows use minimal chrome — no global strip */
-  if (norm === "/login" || parts[0] === "auth") {
+  if (norm === "/login" || norm === "/signup" || parts[0] === "auth") {
     return true;
   }
 
