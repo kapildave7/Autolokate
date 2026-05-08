@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRight, Headphones, Layers, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronRight, Headphones, Layers, ListChecks, MapPin, ShieldCheck, Sparkles } from "lucide-react";
 import { SITE_NAME } from "@/lib/seo/site";
 import { usePreferenceFinderStore } from "@/stores/preference-finder-store";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { useMarketplaceStats } from "@/hooks/use-marketplace-stats";
@@ -32,9 +32,7 @@ export function HomePlatformHighlights() {
     if (completed && hasFullSnapshot) {
       return `Your advisor session is using ${promptSnapshot.city}, ${promptSnapshot.body}, ${promptSnapshot.fuel}, and ${promptSnapshot.budget}. Ranked matches pull from the live catalogue and inventory signals — scroll up to tweak answers anytime.`;
     }
-    return `The hero questionnaire walks through city, body style, fuel, and budget. We rank models using ${nf(
-      brandCount
-    )} brands and ${nf(listingCount)} listings so the shortlist stays actionable, not theoretical.`;
+    return "Answer a few smart questions on city, body style, fuel, and budget. We rank real models so your shortlist stays practical and relevant.";
   }, [
     completed,
     hasFullSnapshot,
@@ -42,19 +40,19 @@ export function HomePlatformHighlights() {
     promptSnapshot.budget,
     promptSnapshot.city,
     promptSnapshot.fuel,
-    brandCount,
-    listingCount,
   ]);
 
-  const decisionBody = useMemo(() => {
-    return `Inventory listings expose price, mileage, and ownership cues; catalogue compare lines up ex-showroom variants without tab sprawl — ${nf(
-      listingCount
-    )} listings across ${nf(cityCount)} cities in one research flow.`;
-  }, [listingCount, cityCount]);
+  const decisionBody = useMemo(
+    () =>
+      "Compare mileage, features, pricing, and ownership cues side by side so you can evaluate models without endless tab switching.",
+    []
+  );
 
-  const expertBody = useMemo(() => {
-    return `When you are down to two or three options, book a 15-minute advisor call — same secure checkout and advice-only positioning as the rest of ${SITE_NAME}.`;
-  }, []);
+  const expertBody = useMemo(
+    () =>
+      "When you narrow it down to a few options, book a short advisor session for practical, unbiased guidance before you decide.",
+    []
+  );
 
   const aboutLead = useMemo(() => {
     return `${SITE_NAME} is a research-first stack: ${nf(listingCount)} listings, ${nf(brandCount)} brands, ${nf(
@@ -65,7 +63,6 @@ export function HomePlatformHighlights() {
   const items: {
     key: string;
     icon: LucideIcon;
-    iconClass: string;
     title: string;
     body: string;
     cta: { href: string; label: string; hash?: string };
@@ -73,7 +70,6 @@ export function HomePlatformHighlights() {
     {
       key: "ai",
       icon: Sparkles,
-      iconClass: "bg-primary/10 text-primary",
       title: "AI-guided shortlist",
       body: aiBody,
       cta: { href: "/", label: "Use the questionnaire", hash: "preference-finder-stepper" },
@@ -81,7 +77,6 @@ export function HomePlatformHighlights() {
     {
       key: "compare",
       icon: Layers,
-      iconClass: "bg-primary/12 text-primary",
       title: "Decision clarity",
       body: decisionBody,
       cta: { href: "/compare/catalogue", label: "Open catalogue compare" },
@@ -89,7 +84,6 @@ export function HomePlatformHighlights() {
     {
       key: "expert",
       icon: Headphones,
-      iconClass: "bg-emerald-500/12 text-emerald-800",
       title: "Expert backup",
       body: expertBody,
       cta: { href: "/book-expert", label: "Book a session" },
@@ -97,9 +91,40 @@ export function HomePlatformHighlights() {
   ];
 
   return (
-    <section className="relative z-[1] border-y border-border bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-        <div className="grid gap-5 md:grid-cols-3 md:gap-6">
+    <section className="relative isolate z-[1] overflow-hidden border-y border-border/70 bg-background py-16 sm:py-20 lg:py-24">
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+        <Image
+          src="/images/home_whyus_light.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className="theme-light-only object-cover object-center opacity-90"
+        />
+        <Image
+          src="/images/home_whyus_dark.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className="theme-dark-only object-cover object-center opacity-90"
+        />
+        <div className="absolute inset-0 bg-background/65" />
+        <div className="absolute inset-x-0 top-0 h-32 bg-linear-to-b from-background to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-background to-transparent" />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="inline-flex items-center justify-center gap-3 text-[11px] font-bold uppercase tracking-[0.28em] text-primary sm:text-xs">
+            <span className="hidden h-px w-10 bg-primary/40 sm:inline-block" aria-hidden />
+            <span>Why {SITE_NAME}</span>
+            <span className="hidden h-px w-10 bg-primary/40 sm:inline-block" aria-hidden />
+          </p>
+          <h2 className="font-display mt-4 text-balance text-3xl font-bold tracking-tight text-foreground sm:text-[2.25rem] lg:text-[2.5rem]">
+            Tools that make your shortlist smarter
+          </h2>
+        </div>
+
+        <div className="mt-12 grid gap-5 md:grid-cols-3 md:gap-6">
           {items.map((item, i) => (
             <motion.div
               key={item.key}
@@ -107,30 +132,46 @@ export function HomePlatformHighlights() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="flex h-full"
             >
-              <Card className="flex h-full flex-col border-border bg-card shadow-app-soft transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-premium">
-                <CardContent className="flex flex-1 flex-col p-6 sm:p-7">
-                  <div
-                    className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-xl",
-                      item.iconClass
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" strokeWidth={1.75} />
+              <div className="group relative flex h-full w-full flex-col overflow-hidden rounded-3xl border border-border/80 bg-card/90 p-7 text-center shadow-app-soft ring-1 ring-foreground/[0.04] backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-premium sm:p-8">
+                <div
+                  className="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full bg-primary/[0.08] blur-3xl"
+                  aria-hidden
+                />
+                <div className="relative">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/12 text-primary ring-1 ring-primary/20 sm:h-16 sm:w-16">
+                    <item.icon className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={1.75} />
                   </div>
-                  <p className="mt-5 text-base font-semibold text-foreground">{item.title}</p>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
-                  <Button variant="outline" className="mt-6 w-full justify-between gap-2 sm:w-auto" asChild>
-                    <Link
-                      href={item.cta.hash ? `${item.cta.href}#${item.cta.hash}` : item.cta.href}
-                      className="inline-flex"
-                    >
-                      {item.cta.label}
-                      <ArrowRight className="h-4 w-4 shrink-0" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                </div>
+
+                <h3 className="mt-6 font-display text-lg font-bold tracking-tight text-foreground sm:text-xl">
+                  {item.title}
+                </h3>
+                <span
+                  aria-hidden
+                  className="mx-auto mt-2.5 block h-[3px] w-9 rounded-full bg-primary/70"
+                />
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground sm:text-[0.95rem]">
+                  {item.body}
+                </p>
+
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "mt-7 h-11 w-full justify-between rounded-full border-primary/30 bg-card/80 px-5 text-sm font-semibold text-primary",
+                    "hover:border-primary/60 hover:bg-primary/[0.06] hover:text-primary"
+                  )}
+                  asChild
+                >
+                  <Link
+                    href={item.cta.hash ? `${item.cta.href}#${item.cta.hash}` : item.cta.href}
+                  >
+                    {item.cta.label}
+                    <ArrowRight className="h-4 w-4 shrink-0" />
+                  </Link>
+                </Button>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -140,21 +181,80 @@ export function HomePlatformHighlights() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-32px" }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-10 overflow-hidden rounded-2xl border border-border bg-linear-to-br from-secondary/40 via-card to-background p-6 shadow-sm sm:p-8"
+          className="relative mt-12 overflow-hidden rounded-3xl border border-border/80 bg-card shadow-app-soft ring-1 ring-foreground/[0.04]"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">About {SITE_NAME}</p>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">{aboutLead}</p>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Structured data and honest comparisons stay default; optional human help is here when spreadsheets stop being
-            enough — no dealer pressure baked into the UI.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Button variant="cta" asChild>
-              <Link href="/about">How we work</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/contact">Contact</Link>
-            </Button>
+          <div className="pointer-events-none absolute inset-0" aria-hidden>
+            <Image
+              src="/images/home_footer_light.png"
+              alt=""
+              fill
+              sizes="(max-width: 1280px) 100vw, 1280px"
+              className="theme-light-only object-cover object-[85%_center] opacity-100"
+            />
+            <Image
+              src="/images/home_footer_dark.png"
+              alt=""
+              fill
+              sizes="(max-width: 1280px) 100vw, 1280px"
+              className="theme-dark-only object-cover object-[85%_center] opacity-100"
+            />
+            <div className="absolute inset-0 bg-linear-to-r from-card from-[5%] via-card/90 to-transparent lg:to-transparent" />
+          </div>
+
+          <div className="relative z-10 max-w-2xl px-6 py-8 sm:px-8 sm:py-10 lg:max-w-[min(40rem,58%)] lg:py-12">
+            <div>
+              <span className="mb-2 block h-px w-10 bg-primary sm:w-12" aria-hidden />
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-primary sm:text-xs">
+                About {SITE_NAME}
+              </p>
+            </div>
+
+            <p className="font-display mt-5 text-lg font-bold leading-snug tracking-tight text-foreground sm:text-xl lg:text-[1.35rem]">
+              {aboutLead}
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-[0.95rem]">
+              Structured data and honest comparisons stay default; optional human help is here when spreadsheets stop being
+              enough — no dealer pressure baked into the UI.
+            </p>
+
+            <ul className="mt-6 flex flex-wrap gap-2.5 sm:gap-3">
+              {(
+                [
+                  { icon: ListChecks, label: `${nf(listingCount)} listings` },
+                  { icon: ShieldCheck, label: `${nf(brandCount)} brands` },
+                  { icon: MapPin, label: `${nf(cityCount)} cities` },
+                ] as { icon: LucideIcon; label: string }[]
+              ).map((row) => (
+                <li
+                  key={row.label}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-card/95 px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm sm:text-[13px]"
+                >
+                  <row.icon className="h-3.5 w-3.5 shrink-0 text-primary sm:h-4 sm:w-4" aria-hidden />
+                  {row.label}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-7 flex flex-wrap items-center gap-3 sm:gap-4">
+              <Button
+                variant="primary"
+                size="lg"
+                className="rounded-full px-6 shadow-[0_12px_32px_-12px_rgba(37,99,235,0.55)]"
+                asChild
+              >
+                <Link href="/about">
+                  How we work
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+              >
+                Contact
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
           </div>
         </motion.div>
       </div>

@@ -1,9 +1,17 @@
 "use client";
 
-import { Fragment } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, Clock, Headphones, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarCheck,
+  Check,
+  Clock,
+  Headphones,
+  Lock,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GA_CATEGORIES, trackEvent } from "@/lib/analytics";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -40,9 +48,9 @@ const ambient = (
 export type HomeExpertBookCtaProps = {
   className?: string;
   /**
-   * `banner` — wide horizontal layout for full-width sections.
-   * `sidebar` — narrow column under filter panels (desktop).
-   * `compact` — full-width single column when the filter sidebar is hidden (mobile).
+   * `banner` — wide horizontal layout for the home page (theme-aware blue design).
+   * `sidebar` — narrow column under filter panels (desktop, listing pages).
+   * `compact` — full-width single column when the filter sidebar is hidden (mobile, listing pages).
    * `embed` — single band under media (e.g. Indian Drive Guide); minimal height.
    */
   variant?: "banner" | "sidebar" | "compact" | "embed";
@@ -51,8 +59,9 @@ export type HomeExpertBookCtaProps = {
 };
 
 /**
- * Expert booking pitch — same emerald / book-expert visual language everywhere.
- * Use `variant` to match available horizontal space on listing pages.
+ * Expert booking pitch.
+ * - `banner` uses the new home-page design (theme-aware, blue/primary, showroom backdrop image).
+ * - Other variants keep the emerald book-expert visual language used across listing pages.
  */
 export function HomeExpertBookCta({
   className,
@@ -63,18 +72,28 @@ export function HomeExpertBookCta({
   const resolvedSource =
     trackSource ??
     (variant === "banner"
-      ? "listing_hd_banner"
+      ? "home_expert_banner"
       : variant === "sidebar"
         ? "listing_sidebar"
         : variant === "embed"
           ? "car_detail_idg_embed"
           : "listing_compact");
 
+  if (variant === "banner") {
+    return (
+      <BannerExpertCta
+        className={className}
+        reduceMotion={reduceMotion}
+        resolvedSource={resolvedSource}
+      />
+    );
+  }
+
   return (
     <motion.div
       className={cn(
         shellClass,
-        variant === "banner" ? "sm:rounded-3xl" : variant === "embed" ? "rounded-xl" : "rounded-2xl",
+        variant === "embed" ? "rounded-xl" : "rounded-2xl",
         className
       )}
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
@@ -95,7 +114,6 @@ export function HomeExpertBookCta({
         className={cn(
           "relative",
           variant === "embed" && "px-3.5 py-3 sm:px-4 sm:py-3.5",
-          variant === "banner" && "px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7",
           variant === "sidebar" && "px-4 py-5 sm:px-4 sm:py-5",
           variant === "compact" && "px-4 py-4 sm:py-5"
         )}
@@ -125,64 +143,6 @@ export function HomeExpertBookCta({
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
-          </div>
-        ) : variant === "banner" ? (
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between md:gap-6 lg:gap-8">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300 sm:text-[11px] sm:tracking-[0.22em]">
-                Expert consultation
-              </p>
-              <h3 className="font-display mt-2 text-xl font-bold leading-snug tracking-tight text-white sm:mt-2.5 sm:text-2xl lg:text-[1.65rem]">
-                Still deciding? Talk to a car expert
-              </h3>
-              <div className="mt-2.5 h-px max-w-sm bg-linear-to-r from-emerald-500/45 via-emerald-400/18 to-transparent sm:mt-3" />
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-200 sm:text-[0.9375rem] sm:leading-relaxed">
-                Your shortlist, budget, and city — reviewed by a senior advisor in one structured call. Next, pick a time
-                that works for you, pay securely online, and we&apos;ll confirm your slot with everything you need for the
-                call.
-              </p>
-              <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-zinc-300 sm:text-xs">
-                {trustChips.map(({ icon: Icon, label }, i) => (
-                  <Fragment key={label}>
-                    {i > 0 ? (
-                      <span className="text-zinc-500" aria-hidden>
-                        ·
-                      </span>
-                    ) : null}
-                    <span className="inline-flex items-center gap-1.5">
-                      <Icon className="h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
-                      {label}
-                    </span>
-                  </Fragment>
-                ))}
-              </p>
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/12 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-100 sm:px-3 sm:py-1 sm:text-xs">
-                <Headphones className="h-3 w-3 text-emerald-300 sm:h-3.5 sm:w-3.5" aria-hidden />
-                You&apos;ll see the full fee before you pay anything
-              </div>
-            </div>
-
-            <div className="flex w-full shrink-0 flex-col gap-1.5 md:w-auto md:min-w-[200px] lg:min-w-[220px]">
-              <Button
-                variant="expert"
-                size="lg"
-                className="h-11 w-full gap-2 rounded-xl text-sm font-semibold shadow-lg shadow-emerald-900/35 sm:h-12 sm:text-base"
-                asChild
-              >
-                <Link href="/book-expert" onClick={() =>
-                trackEvent("book_call_click", {
-                  event_category: GA_CATEGORIES.conversion,
-                  source: resolvedSource,
-                })
-              }>
-                  Book expert session
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <p className="text-center text-[10px] leading-relaxed text-zinc-300 sm:text-[11px] md:text-right">
-                One session fee · no obligation until you confirm
-              </p>
-            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -274,6 +234,117 @@ export function HomeExpertBookCta({
           </div>
         )}
       </div>
+    </motion.div>
+  );
+}
+
+/** Home-page banner — theme-aware blue design with showroom backdrop image. */
+function BannerExpertCta({
+  className,
+  reduceMotion,
+  resolvedSource,
+}: {
+  className?: string;
+  reduceMotion: boolean;
+  resolvedSource: string;
+}) {
+  return (
+    <motion.div
+      className={cn(
+        "relative isolate overflow-hidden rounded-3xl border border-border/80 bg-card text-foreground shadow-app-soft ring-1 ring-foreground/[0.04]",
+        className
+      )}
+      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+        <Image
+          src="/images/home_session_light.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className="theme-light-only object-cover object-[78%_center] lg:object-[72%_center]"
+        />
+        <Image
+          src="/images/home_session_dark.png"
+          alt=""
+          fill
+          sizes="100vw"
+          className="theme-dark-only object-cover object-[78%_center] lg:object-[72%_center]"
+        />
+        <div className="absolute inset-0 bg-linear-to-r from-card via-card/85 to-card/0 lg:via-card/65" />
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-linear-to-l from-card/35 to-transparent" />
+      </div>
+
+      <div
+        className="pointer-events-none absolute inset-x-6 top-0 h-px bg-linear-to-r from-transparent via-primary/35 to-transparent"
+        aria-hidden
+      />
+
+      <div className="relative z-10 grid gap-6 p-6 sm:p-8 lg:grid-cols-12 lg:items-center lg:gap-8 lg:p-10">
+        <div className="min-w-0 lg:col-span-8">
+          <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-primary sm:text-xs">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary/12 text-primary ring-1 ring-primary/20">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+            </span>
+            Expert consultation
+          </p>
+          <h3 className="font-display mt-4 text-balance text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-[1.85rem] lg:text-[2.05rem]">
+            Still deciding? Talk to a car expert
+          </h3>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-[0.95rem]">
+            Share your shortlist, budget, and city — reviewed by a senior advisor in one structured call. Get
+            honest advice to help you choose with confidence.
+          </p>
+
+          <ul className="mt-5 flex flex-wrap gap-2.5">
+            {trustChips.map(({ icon: Icon, label }) => (
+              <li
+                key={label}
+                className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/90 px-3.5 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm sm:text-[13px]"
+              >
+                <Icon className="h-3.5 w-3.5 text-primary" aria-hidden />
+                {label}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-3.5 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/[0.08] px-3.5 py-1.5 text-xs font-semibold text-primary sm:text-[13px]">
+            <Lock className="h-3.5 w-3.5" aria-hidden />
+            You&apos;ll see the full fee before you pay anything
+          </div>
+        </div>
+
+        <div className="flex w-full shrink-0 flex-col items-stretch gap-2 lg:col-span-4 lg:items-end">
+          <Button
+            asChild
+            size="lg"
+            variant="primary"
+            className="h-12 w-full max-w-sm gap-2 rounded-2xl px-6 text-sm font-semibold shadow-[0_12px_32px_-12px_rgba(37,99,235,0.55)] sm:text-base lg:max-w-none lg:min-w-[14rem]"
+          >
+            <Link
+              href="/book-expert"
+              onClick={() =>
+                trackEvent("book_call_click", {
+                  event_category: GA_CATEGORIES.conversion,
+                  source: resolvedSource,
+                })
+              }
+            >
+              <CalendarCheck className="h-4 w-4" aria-hidden />
+              Book expert session
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+          <p className="inline-flex items-center justify-center gap-1.5 text-[11px] leading-relaxed text-muted-foreground lg:justify-end lg:text-right">
+            <Check className="h-3 w-3 text-primary" aria-hidden />
+            One session fee · no obligation until you confirm
+          </p>
+        </div>
+      </div>
+
     </motion.div>
   );
 }

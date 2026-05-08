@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
-import { cars } from "@/data";
 import { GA_CATEGORIES, trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +21,6 @@ import { usePreferenceFinderStore } from "@/stores/preference-finder-store";
 import { advisorResultsMeta, normalizeAdvisorResultsToMatches } from "@/lib/advisor-results-normalize";
 import { AiMatchedCarCard } from "@/components/discovery/ai-matched-car-card";
 import { DiscoveryHomeBootstrapLoader } from "@/components/discovery/discovery-home-bootstrap-loader";
-import { DiscoveryCatalogueTrending } from "@/components/discovery/discovery-catalogue-trending";
 import { HomeBrowseMarketplace } from "@/components/home/home-browse-marketplace";
 import { HomePlatformHighlights } from "@/components/home/home-platform-highlights";
 
@@ -30,7 +28,6 @@ type SortBy = "price-asc" | "price-desc" | "mileage" | "popularity";
 
 export function DiscoveryHome() {
   const reduceMotion = useReducedMotion();
-  const allCities = useMemo(() => Array.from(new Set(cars.map((c) => c.city))).sort(), []);
   const [sort, setSort] = useState<SortBy>("popularity");
   const [visibleCount, setVisibleCount] = useState(6);
   const promptSnapshot = usePreferenceFinderStore((s) => s.promptSnapshot);
@@ -72,12 +69,40 @@ export function DiscoveryHome() {
     <div className="relative min-h-screen bg-background">
       <DiscoveryHomeBootstrapLoader />
       <HomePageAmbient />
-      <HomeHeroSection
-        reduceMotion={reduceMotion}
-        allCities={allCities}
-        recommendationLine={recommendationLine}
-        onViewMatches={scrollToMatches}
-      />
+      <HomeHeroSection reduceMotion={reduceMotion} />
+
+      {/* Preference finder (wizard) — hidden from home for now; restore block + HomeHeroPreferenceWizard import when bringing it back.
+      <section
+        aria-label="Preference finder"
+        className="relative z-[1] border-b border-border/70 bg-hero-mesh py-12 sm:py-16"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 max-w-2xl space-y-3">
+            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-primary">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-primary/15 bg-primary/5 shadow-sm">
+                <ListChecks className="h-3.5 w-3.5" aria-hidden />
+              </span>
+              Preference finder
+            </p>
+            <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Shape a comparable shortlist in minutes
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Answer four quick steps — city, body, fuel & budget — and we wire your picks straight to live
+              listings. Sign in to save the session and resume anytime.
+            </p>
+          </div>
+          <div className="mx-auto w-full max-w-xl">
+            <HomeHeroPreferenceWizard
+              reduceMotion={reduceMotion}
+              allCities={allCities}
+              recommendationLine={recommendationLine}
+              onViewMatches={scrollToMatches}
+            />
+          </div>
+        </div>
+      </section>
+      */}
 
       {hasMatches ? (
         <section className="relative z-[1] mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6 sm:pb-12 sm:pt-8 lg:px-8">
@@ -228,8 +253,6 @@ export function DiscoveryHome() {
           </div>
         </section>
       ) : null}
-
-      <DiscoveryCatalogueTrending />
 
       <HomeBrowseMarketplace />
 
