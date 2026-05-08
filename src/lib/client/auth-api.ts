@@ -45,7 +45,7 @@ export type VerifyOtpPayload = {
   otp: string;
   consent_accepted: boolean;
   consent_version: string;
-  full_name: string;
+  full_name?: string;
 };
 
 export type VerifyOtpResponse = {
@@ -119,9 +119,17 @@ export async function requestOtp(payload: RequestOtpPayload): Promise<RequestOtp
 }
 
 export async function verifyOtp(payload: VerifyOtpPayload): Promise<VerifyOtpResponse> {
+  const body: Record<string, unknown> = {
+    phone: payload.phone,
+    otp: payload.otp,
+    consent_accepted: payload.consent_accepted,
+    consent_version: payload.consent_version,
+  };
+  if (payload.full_name?.trim()) body.full_name = payload.full_name.trim();
+
   const response = await apiRequest<VerifyOtpApiResponse>("/v1/auth/verify-otp", {
     method: "POST",
-    body: payload,
+    body,
   });
 
   if ("access_token" in response && "refresh_token" in response) {

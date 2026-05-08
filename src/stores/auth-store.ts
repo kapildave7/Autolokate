@@ -48,7 +48,6 @@ export const useAuthStore = create<AuthState>()(
           otp,
           consent_accepted: true,
           consent_version: "v1.0",
-          full_name: "Kapil Dave",
         });
         writeAuthTokens({
           accessToken: response.access_token,

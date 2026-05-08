@@ -11,11 +11,11 @@ export async function getTco(variantId: string, city: string) {
   return unbox(res);
 }
 
-export async function getEmi(params: { principal: number; rate: number; tenure: number }) {
+export async function getEmi(params: { principal: number; rate: number; tenure_months: number }) {
   const q = new URLSearchParams({
     principal: String(params.principal),
     rate: String(params.rate),
-    tenure: String(params.tenure),
+    tenure_months: String(params.tenure_months),
   });
   const res = await apiRequest<Envelope<unknown>>(`/v1/prices/emi?${q.toString()}`);
   return unbox(res);
@@ -28,9 +28,9 @@ export async function getResale(variantId: string, year = 3) {
 
 export { getEvSubsidies } from "@/lib/client/prices-api";
 
-export async function getFuelPrice(city: string, fuel: string) {
+export async function getFuelPrice(city: string, fuelType: string) {
   const res = await apiRequest<Envelope<unknown>>(
-    `/v1/prices/fuel?city=${encodeURIComponent(city)}&fuel=${encodeURIComponent(fuel)}`
+    `/v1/prices/fuel?city=${encodeURIComponent(city)}&fuel_type=${encodeURIComponent(fuelType)}`
   );
   return unbox(res);
 }

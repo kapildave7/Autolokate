@@ -72,7 +72,13 @@ export async function archiveAdvisorConversation(conversationId: string): Promis
   });
 }
 
-export async function createAdvisorConversation(input: { vehicle_category: string; title: string }) {
+/** Matches `CreateConversationDto.vehicle_category` enum from the OpenAPI spec. */
+export type AdvisorVehicleCategory = "car" | "bike" | "scooter";
+
+export async function createAdvisorConversation(input: {
+  vehicle_category: AdvisorVehicleCategory;
+  title: string;
+}) {
   const res = await apiRequest<CreateConversationResponse>("/v1/advisor/conversations", {
     method: "POST",
     auth: true,

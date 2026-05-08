@@ -21,18 +21,31 @@ export async function getBookingSlotsByDate(dateIso: string) {
   return unbox(res) ?? [];
 }
 
+export type BookingType = "founder_call" | "test_drive" | "service_appointment" | "consultation";
+
+/**
+ * POST /v1/bookings/book — payload matches `CreateBookingDto` from the OpenAPI spec.
+ * Only the fields declared in the DTO are sent to avoid validation rejections.
+ */
 export async function createBooking(payload: {
   slot_date: string;
   slot_start_time: string;
   slot_end_time: string;
-  booking_type: "founder_call" | "test_drive" | "service_appointment" | "consultation";
+  booking_type: BookingType;
   car_profile_id?: string;
-  notes?: string;
 }) {
+  const body: Record<string, unknown> = {
+    slot_date: payload.slot_date,
+    slot_start_time: payload.slot_start_time,
+    slot_end_time: payload.slot_end_time,
+    booking_type: payload.booking_type,
+  };
+  if (payload.car_profile_id) body.car_profile_id = payload.car_profile_id;
+
   const res = await apiRequest<Envelope<unknown>>("/v1/bookings/book", {
     method: "POST",
     auth: true,
-    body: payload,
+    body,
   });
   return unbox(res);
 }

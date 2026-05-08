@@ -36,6 +36,10 @@ type RunsEnvelope =
 type ObjectEnvelope = Record<string, unknown> | { data?: Record<string, unknown> };
 type LogsEnvelope = ScrapeLog[] | { data?: ScrapeLog[] };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function toQuery(page: number, limit: number): string {
   const q = new URLSearchParams();
   q.set("page", String(page));
@@ -64,7 +68,10 @@ function unwrapRuns(payload: RunsEnvelope, page: number, limit: number): ScrapeR
     };
   }
 
-  const items = payload.data ?? payload.items ?? payload.runs ?? [];
+  const itemsFromData = Array.isArray(payload.data) ? payload.data : [];
+  const itemsFromItems = "items" in payload && Array.isArray(payload.items) ? payload.items : [];
+  const itemsFromRuns = "runs" in payload && Array.isArray(payload.runs) ? payload.runs : [];
+  const items = itemsFromData.length > 0 ? itemsFromData : itemsFromItems.length > 0 ? itemsFromItems : itemsFromRuns;
   const total = typeof payload.meta?.total === "number" ? payload.meta.total : items.length;
   return { items, total, page, limit };
 }
@@ -77,11 +84,30 @@ export async function triggerScraperEnrich(brand: string): Promise<void> {
   });
 }
 
-export async function triggerManualScrapeRun(payload: Record<string, unknown> = {}): Promise<void> {
+/** `source` values defined by the OpenAPI `TriggerScrapeDto` enum. */
+export type ScrapeSource =
+  | "all"
+  | "maruti-suzuki"
+  | "tata-motors"
+  | "hyundai"
+  | "mahindra"
+  | "kia"
+  | "hero-motocorp"
+  | "bajaj-auto"
+  | "royal-enfield";
+
+/**
+ * POST /v1/admin/scraper — `source` is required per `TriggerScrapeDto`.
+ * Defaults to `"all"` when none is provided.
+ */
+export async function triggerManualScrapeRun(
+  source: ScrapeSource = "all",
+  extra: Record<string, unknown> = {}
+): Promise<void> {
   await apiRequest("/v1/admin/scraper", {
     method: "POST",
     auth: true,
-    body: payload,
+    body: { source, ...extra },
   });
 }
 
@@ -98,7 +124,10 @@ export async function getScraperRunById(id: string): Promise<Record<string, unkn
     method: "GET",
     auth: true,
   });
-  return "data" in payload && payload.data ? payload.data : payload;
+  if (isRecord(payload) && "data" in payload && isRecord(payload.data)) {
+    return payload.data;
+  }
+  return isRecord(payload) ? payload : {};
 }
 
 export async function getScraperRunLogs(id: string): Promise<ScrapeLog[]> {
