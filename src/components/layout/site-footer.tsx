@@ -36,7 +36,7 @@ const footerSections: { title: string; links: { href: string; label: string; id:
 
 export function SiteFooter() {
   return (
-    <footer className="relative z-1 border-t border-border bg-white">
+    <footer className="relative z-1 border-t border-border bg-card text-foreground">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 sm:gap-12 sm:px-6 lg:grid-cols-4 lg:px-8">
         <div>
           <Link
@@ -51,11 +51,18 @@ export function SiteFooter() {
             }
           >
             <Image
+              src="https://autolokate.com/autolokate_dark.png"
+              alt="Autolokate"
+              width={120}
+              height={32}
+              className="theme-dark-only h-6 w-auto sm:h-7"
+            />
+            <Image
               src="https://autolokate.com/autolokate_light.png"
               alt="Autolokate"
               width={120}
               height={32}
-              className="h-6 w-auto sm:h-7"
+              className="theme-light-only h-6 w-auto sm:h-7"
             />
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">

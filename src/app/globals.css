@@ -36,16 +36,47 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  /* Surfaces aligned with preference Summary: zinc gray / white (not lavender wash) */
+  --radius: 0.875rem;
+  /* Public site theme — dark surface + bright blue accent (matches autolokate.com). */
+  --background: #0a0a0f;
+  --foreground: #fafafa;
+  --card: #13141a;
+  --card-foreground: #fafafa;
+  --popover: #13141a;
+  --popover-foreground: #fafafa;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #1c1d24;
+  --secondary-foreground: #e5e7eb;
+  --muted: #1c1d24;
+  --muted-foreground: #9ca3af;
+  --accent: #1c1d24;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --border: #232530;
+  --input: #232530;
+  --ring: #2563eb;
+  --text-dim: #9ca3af;
+  --cta: #2563eb;
+  --cta-hover: #1d4ed8;
+  --cta-foreground: #ffffff;
+  --warn-soft: #1f1a0a;
+  --warn-soft-foreground: #fbbf24;
+}
+
+/* Public site light mode — applied when the user selects "light" in the header toggle.
+   Also inherited by `.admin-scope` so the admin panel always renders light/zinc
+   regardless of the public-site theme choice. */
+html[data-theme="light"],
+.admin-scope {
   --background: #fafafa;
   --foreground: #18181b;
   --card: #ffffff;
   --card-foreground: #18181b;
   --popover: #ffffff;
   --popover-foreground: #18181b;
-  --primary: #27272a;
-  --primary-foreground: #fafafa;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
   --secondary: #f4f4f5;
   --secondary-foreground: #27272a;
   --muted: #f4f4f5;
@@ -55,13 +86,27 @@
   --destructive: #dc2626;
   --border: #e4e4e7;
   --input: #e4e4e7;
-  --ring: #71717a;
+  --ring: #2563eb;
   --text-dim: #71717a;
+  --cta: #2563eb;
+  --cta-hover: #1d4ed8;
+  --cta-foreground: #ffffff;
+  --warn-soft: #fff7eb;
+  --warn-soft-foreground: #6b4420;
+}
+
+/* Admin keeps the original neutral zinc primary (no blue accent inside admin). */
+.admin-scope {
+  --radius: 0.75rem;
+  --primary: #27272a;
+  --primary-foreground: #fafafa;
+  --ring: #71717a;
   --cta: #f4f4f5;
   --cta-hover: #e4e4e7;
   --cta-foreground: #18181b;
-  --warn-soft: #fff7eb;
-  --warn-soft-foreground: #6b4420;
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
 }
 
 @layer base {
@@ -101,46 +146,99 @@
   }
 }
 
-/* Legacy utility names — mapped to light surfaces (no glassmorphism) */
+/* Legacy utility names — translucent dark surfaces with a faint blue ring. */
 .glass-panel {
-  background: var(--card);
+  background: rgba(19, 20, 26, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
 .glass-card {
+  background: rgba(19, 20, 26, 0.78);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 16px 40px -28px rgba(0, 0, 0, 0.6);
+}
+
+.shadow-premium {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 12px 32px -12px rgba(37, 99, 235, 0.18),
+    0 28px 60px -28px rgba(0, 0, 0, 0.55);
+}
+
+/* Page / section depth — soft halo on dark */
+.shadow-app-soft {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 18px 48px -28px rgba(0, 0, 0, 0.55),
+    0 32px 64px -36px rgba(37, 99, 235, 0.12);
+}
+
+.shadow-hero-card {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 22px 56px -28px rgba(0, 0, 0, 0.65),
+    0 40px 80px -40px rgba(37, 99, 235, 0.18);
+}
+
+/* Subtle editorial mesh — dark hero & feature bands with a faint blue glow + dot grid */
+.bg-hero-mesh {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 130% 85% at 92% -25%, rgba(37, 99, 235, 0.18), transparent 55%),
+    radial-gradient(ellipse 95% 65% at 5% 105%, rgba(59, 130, 246, 0.14), transparent 55%),
+    radial-gradient(rgba(148, 163, 184, 0.08) 0.8px, transparent 0.8px);
+  background-size: auto, auto, 26px 26px;
+}
+
+/* Light-mode editorial look — used by the public site when the user picks "light"
+   in the header toggle, and by the admin panel (always). */
+html[data-theme="light"] .glass-panel,
+.admin-scope .glass-panel {
+  background: var(--card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+html[data-theme="light"] .glass-card,
+.admin-scope .glass-card {
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow:
     0 1px 3px rgba(15, 23, 42, 0.06),
     0 1px 2px rgba(15, 23, 42, 0.04);
 }
-
-.shadow-premium {
+html[data-theme="light"] .shadow-premium,
+.admin-scope .shadow-premium {
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.035),
     0 10px 28px -10px rgba(15, 23, 42, 0.08),
     0 28px 56px -28px rgba(24, 24, 27, 0.1);
 }
-
-/* Page / section depth — airy, editorial */
-.shadow-app-soft {
+html[data-theme="light"] .shadow-app-soft,
+.admin-scope .shadow-app-soft {
   box-shadow:
     0 1px 0 rgba(15, 23, 42, 0.04),
     0 18px 48px -28px rgba(15, 23, 42, 0.06),
     0 32px 64px -36px rgba(15, 23, 42, 0.05);
 }
-
-.shadow-hero-card {
+html[data-theme="light"] .shadow-hero-card,
+.admin-scope .shadow-hero-card {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.85) inset,
     0 1px 2px rgba(15, 23, 42, 0.04),
     0 22px 56px -28px rgba(15, 23, 42, 0.12),
     0 40px 80px -40px rgba(24, 24, 27, 0.1);
 }
-
-/* Subtle editorial mesh — hero & feature bands */
-.bg-hero-mesh {
+html[data-theme="light"] .bg-hero-mesh,
+.admin-scope .bg-hero-mesh {
   background-color: var(--background);
   background-image:
     radial-gradient(ellipse 130% 85% at 92% -25%, rgba(39, 39, 42, 0.07), transparent 55%),
@@ -216,7 +314,7 @@
   height: min(52vw, 36rem);
   top: -18%;
   right: -12%;
-  background: radial-gradient(circle, rgba(39, 39, 42, 0.1) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.28) 0%, transparent 68%);
   animation: heroOrbDriftA 42s ease-in-out infinite;
 }
 
@@ -225,8 +323,17 @@
   height: min(48vw, 32rem);
   bottom: -22%;
   left: -16%;
-  background: radial-gradient(circle, rgba(63, 63, 70, 0.07) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
   animation: heroOrbDriftB 48s ease-in-out infinite;
+}
+
+html[data-theme="light"] .hero-ambient-orb-a,
+.admin-scope .hero-ambient-orb-a {
+  background: radial-gradient(circle, rgba(39, 39, 42, 0.1) 0%, transparent 68%);
+}
+html[data-theme="light"] .hero-ambient-orb-b,
+.admin-scope .hero-ambient-orb-b {
+  background: radial-gradient(circle, rgba(63, 63, 70, 0.07) 0%, transparent 70%);
 }
 
 /* Home discovery — whisper-soft drifting shapes (icons use .home-ambient-icon) */
@@ -262,8 +369,13 @@
   pointer-events: none;
   position: absolute;
   color: var(--foreground);
-  opacity: 0.045;
+  opacity: 0.07;
   will-change: transform;
+}
+
+html[data-theme="light"] .home-ambient-icon,
+.admin-scope .home-ambient-icon {
+  opacity: 0.045;
 }
 
 .home-ambient-drift-a {
@@ -374,6 +486,29 @@
     linear-gradient(
       105deg,
       transparent 0%,
+      rgba(37, 99, 235, 0.1) 22%,
+      transparent 44%,
+      rgba(59, 130, 246, 0.07) 62%,
+      transparent 82%,
+      rgba(37, 99, 235, 0.09) 100%
+    ),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 40px,
+      rgba(148, 163, 184, 0.04) 40px,
+      rgba(148, 163, 184, 0.04) 41px
+    );
+  background-size: 240% 100%, auto;
+  animation: carsBrowseMeshSlide 28s linear infinite;
+}
+
+html[data-theme="light"] .cars-browse-explore-mesh,
+.admin-scope .cars-browse-explore-mesh {
+  background-image:
+    linear-gradient(
+      105deg,
+      transparent 0%,
       rgba(63, 63, 70, 0.05) 22%,
       transparent 44%,
       rgba(82, 82, 91, 0.04) 62%,
@@ -387,8 +522,6 @@
       rgba(63, 63, 70, 0.02) 40px,
       rgba(63, 63, 70, 0.02) 41px
     );
-  background-size: 240% 100%, auto;
-  animation: carsBrowseMeshSlide 28s linear infinite;
 }
 .cars-browse-deco-drift-a {
   animation: carsBrowseDecoDriftA 42s ease-in-out infinite;
@@ -415,7 +548,7 @@
   height: min(70vw, 42rem);
   top: -25%;
   right: -20%;
-  background: radial-gradient(circle, rgba(39, 39, 42, 0.1) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.22) 0%, transparent 68%);
   animation: carsBrowseOrbDriftA 56s ease-in-out infinite;
 }
 .cars-browse-page-orb-b {
@@ -423,8 +556,17 @@
   height: min(55vw, 32rem);
   bottom: -18%;
   left: -12%;
-  background: radial-gradient(circle, rgba(63, 63, 70, 0.09) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.18) 0%, transparent 70%);
   animation: carsBrowseOrbDriftB 62s ease-in-out infinite reverse;
+}
+
+html[data-theme="light"] .cars-browse-page-orb-a,
+.admin-scope .cars-browse-page-orb-a {
+  background: radial-gradient(circle, rgba(39, 39, 42, 0.1) 0%, transparent 68%);
+}
+html[data-theme="light"] .cars-browse-page-orb-b,
+.admin-scope .cars-browse-page-orb-b {
+  background: radial-gradient(circle, rgba(63, 63, 70, 0.09) 0%, transparent 70%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -446,11 +588,19 @@
 
 .bg-premium-aurora {
   background-image:
+    radial-gradient(ellipse 120% 80% at 5% 0%, rgba(37, 99, 235, 0.18), transparent 50%),
+    radial-gradient(ellipse 100% 70% at 95% 10%, rgba(59, 130, 246, 0.14), transparent 48%),
+    linear-gradient(180deg, #0b0c12 0%, #0a0a0f 100%);
+  background-size: 140% 140%, 140% 140%, 100% 100%;
+  animation: auroraShift 16s ease-in-out infinite alternate;
+}
+
+html[data-theme="light"] .bg-premium-aurora,
+.admin-scope .bg-premium-aurora {
+  background-image:
     radial-gradient(ellipse 120% 80% at 5% 0%, rgba(24, 24, 27, 0.06), transparent 50%),
     radial-gradient(ellipse 100% 70% at 95% 10%, rgba(24, 24, 27, 0.05), transparent 48%),
     linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
-  background-size: 140% 140%, 140% 140%, 100% 100%;
-  animation: auroraShift 16s ease-in-out infinite alternate;
 }
 
 .card-hover-premium {
@@ -463,6 +613,14 @@
 .card-hover-premium:hover {
   transform: translateY(-2px);
   box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(37, 99, 235, 0.12);
+  border-color: rgba(59, 130, 246, 0.45);
+}
+
+html[data-theme="light"] .card-hover-premium:hover,
+.admin-scope .card-hover-premium:hover {
+  box-shadow:
     0 8px 24px rgba(15, 23, 42, 0.08),
     0 2px 8px rgba(15, 23, 42, 0.04);
   border-color: rgba(24, 24, 27, 0.18);
@@ -474,6 +632,11 @@
 
 .lift-hover:hover {
   transform: translateY(-3px);
+  box-shadow: 0 12px 30px -18px rgba(37, 99, 235, 0.45);
+}
+
+html[data-theme="light"] .lift-hover:hover,
+.admin-scope .lift-hover:hover {
   box-shadow: 0 12px 30px -18px rgba(15, 23, 42, 0.22);
 }
 
@@ -482,29 +645,53 @@
 }
 
 .neon-glow {
+  box-shadow: 0 4px 24px rgba(37, 99, 235, 0.32);
+}
+
+html[data-theme="light"] .neon-glow,
+.admin-scope .neon-glow {
   box-shadow: 0 4px 24px rgba(24, 24, 27, 0.14);
 }
 
-/* Media overlays — subtle on light hero imagery */
+/* Media overlays — fade hero imagery into the dark background */
 .media-cinematic-fade {
   pointer-events: none;
-  background: linear-gradient(to top, var(--background) 0%, rgba(248, 250, 252, 0.92) 24%, transparent 100%);
+  background: linear-gradient(to top, var(--background) 0%, rgba(10, 10, 15, 0.92) 24%, transparent 100%);
 }
 
 .media-cinematic-vignette {
   pointer-events: none;
-  background: radial-gradient(ellipse 90% 70% at 50% 50%, transparent 40%, rgba(15, 23, 42, 0.12) 100%);
+  background: radial-gradient(ellipse 90% 70% at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
 }
 
 .media-hero-overlay {
   pointer-events: none;
   background:
-    linear-gradient(to top, var(--background) 0%, rgba(250, 250, 250, 0.92) 32%, transparent 72%),
-    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(24, 24, 27, 0.04), transparent 55%);
+    linear-gradient(to top, var(--background) 0%, rgba(10, 10, 15, 0.92) 32%, transparent 72%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(37, 99, 235, 0.14), transparent 55%);
 }
 
 .media-thumb-overlay {
   pointer-events: none;
+  background: linear-gradient(to top, rgba(10, 10, 15, 0.92) 0%, transparent 55%);
+}
+
+html[data-theme="light"] .media-cinematic-fade,
+.admin-scope .media-cinematic-fade {
+  background: linear-gradient(to top, var(--background) 0%, rgba(248, 250, 252, 0.92) 24%, transparent 100%);
+}
+html[data-theme="light"] .media-cinematic-vignette,
+.admin-scope .media-cinematic-vignette {
+  background: radial-gradient(ellipse 90% 70% at 50% 50%, transparent 40%, rgba(15, 23, 42, 0.12) 100%);
+}
+html[data-theme="light"] .media-hero-overlay,
+.admin-scope .media-hero-overlay {
+  background:
+    linear-gradient(to top, var(--background) 0%, rgba(250, 250, 250, 0.92) 32%, transparent 72%),
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(24, 24, 27, 0.04), transparent 55%);
+}
+html[data-theme="light"] .media-thumb-overlay,
+.admin-scope .media-thumb-overlay {
   background: linear-gradient(to top, rgba(248, 250, 252, 0.95) 0%, transparent 55%);
 }
 
@@ -542,8 +729,13 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(24, 24, 27, 0.06), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
   animation: shimmer 1.35s ease-in-out infinite;
+}
+
+html[data-theme="light"] .skeleton-shimmer::after,
+.admin-scope .skeleton-shimmer::after {
+  background: linear-gradient(90deg, transparent, rgba(24, 24, 27, 0.06), transparent);
 }
 
 .dialog-premium[data-state="open"] {
@@ -579,11 +771,35 @@
 }
 
 ::selection {
-  background: rgba(39, 39, 42, 0.18);
-  color: #fafafa;
+  background: rgba(37, 99, 235, 0.42);
+  color: #ffffff;
+}
+
+html[data-theme="light"] ::selection,
+.admin-scope ::selection {
+  background: rgba(37, 99, 235, 0.18);
+  color: #18181b;
 }
 
 @layer utilities {
+  /* Theme-scoped visibility — render both light/dark assets, show only one
+     based on the active `data-theme`. Avoids hydration mismatches because
+     both elements always exist in the DOM. */
+  .theme-dark-only {
+    display: var(--theme-dark-display, inline-block);
+  }
+  .theme-light-only {
+    display: none;
+  }
+  html[data-theme="light"] .theme-dark-only,
+  .admin-scope .theme-dark-only {
+    display: none;
+  }
+  html[data-theme="light"] .theme-light-only,
+  .admin-scope .theme-light-only {
+    display: var(--theme-dark-display, inline-block);
+  }
+
   /* Safe areas (notch / home indicator) — use on fixed footers / docks */
   .pb-safe {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
@@ -764,37 +980,31 @@ html {
   }
 }
 
-/* Site breadcrumbs: compact strip; inactive = muted; current = high contrast. No hover styling. */
-.site-breadcrumb-nav a {
-  color: #a3a3a3 !important;
-}
-.site-breadcrumb-nav a:hover {
-  color: #a3a3a3 !important;
-}
-.site-breadcrumb-nav .breadcrumb-inactive-text {
-  color: #a3a3a3 !important;
+/* Site breadcrumbs — dark default: muted gray inactive, white current. Admin scope keeps the original light treatment. */
+.site-breadcrumb-nav a,
+.site-breadcrumb-nav a:hover,
+.site-breadcrumb-nav .breadcrumb-inactive-text,
+.site-breadcrumb-nav svg[aria-hidden="true"] {
+  color: #737373 !important;
 }
 .site-breadcrumb-nav [aria-current="page"],
 .site-breadcrumb-nav .breadcrumb-active-text {
-  color: #0a0a0a !important;
+  color: #fafafa !important;
   font-weight: 600;
 }
-.site-breadcrumb-nav svg[aria-hidden="true"] {
+html[data-theme="light"] .site-breadcrumb-nav a,
+html[data-theme="light"] .site-breadcrumb-nav a:hover,
+html[data-theme="light"] .site-breadcrumb-nav .breadcrumb-inactive-text,
+html[data-theme="light"] .site-breadcrumb-nav svg[aria-hidden="true"],
+.admin-scope .site-breadcrumb-nav a,
+.admin-scope .site-breadcrumb-nav a:hover,
+.admin-scope .site-breadcrumb-nav .breadcrumb-inactive-text,
+.admin-scope .site-breadcrumb-nav svg[aria-hidden="true"] {
   color: #a3a3a3 !important;
 }
-.dark .site-breadcrumb-nav a {
-  color: #737373 !important;
-}
-.dark .site-breadcrumb-nav a:hover {
-  color: #737373 !important;
-}
-.dark .site-breadcrumb-nav .breadcrumb-inactive-text {
-  color: #737373 !important;
-}
-.dark .site-breadcrumb-nav svg[aria-hidden="true"] {
-  color: #737373 !important;
-}
-.dark .site-breadcrumb-nav [aria-current="page"],
-.dark .site-breadcrumb-nav .breadcrumb-active-text {
-  color: #fafafa !important;
+html[data-theme="light"] .site-breadcrumb-nav [aria-current="page"],
+html[data-theme="light"] .site-breadcrumb-nav .breadcrumb-active-text,
+.admin-scope .site-breadcrumb-nav [aria-current="page"],
+.admin-scope .site-breadcrumb-nav .breadcrumb-active-text {
+  color: #0a0a0a !important;
 }

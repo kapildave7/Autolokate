@@ -3,6 +3,7 @@
 import { Toaster } from "sonner";
 import { useEffect } from "react";
 import { QueryProvider } from "@/providers/query-provider";
+import { ThemeProvider, useTheme } from "@/providers/theme-provider";
 import { hasAuthTokens } from "@/lib/client/auth-storage";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -18,12 +19,19 @@ function AuthBootstrap() {
   return null;
 }
 
+function ThemedToaster() {
+  const { resolvedTheme } = useTheme();
+  return <Toaster richColors position="top-center" theme={resolvedTheme} closeButton />;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <QueryProvider>
-      <AuthBootstrap />
-      {children}
-      <Toaster richColors position="top-center" theme="light" closeButton />
-    </QueryProvider>
+    <ThemeProvider>
+      <QueryProvider>
+        <AuthBootstrap />
+        {children}
+        <ThemedToaster />
+      </QueryProvider>
+    </ThemeProvider>
   );
 }

@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <AdminSidebarShell>{children}</AdminSidebarShell>;
+  return (
+    <div className="admin-scope">
+      <AdminSidebarShell>{children}</AdminSidebarShell>
+    </div>
+  );
 }

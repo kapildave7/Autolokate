@@ -15,8 +15,32 @@ import { ApiError } from "@/lib/client/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
-const LOGO_SRC = "https://autolokate.com/autolokate_light.png";
+const LOGO_DARK_SRC = "https://autolokate.com/autolokate_dark.png";
+const LOGO_LIGHT_SRC = "https://autolokate.com/autolokate_light.png";
 const HERO_VIDEO_SRC = "/videos/ultra-realistic-cinematic-short-film-of-a-young-pr.mp4";
+
+function BrandWordmark({ className }: { className?: string }) {
+  return (
+    <>
+      <Image
+        src={LOGO_DARK_SRC}
+        alt="Autolokate"
+        width={140}
+        height={36}
+        priority
+        className={cn("theme-dark-only", className)}
+      />
+      <Image
+        src={LOGO_LIGHT_SRC}
+        alt="Autolokate"
+        width={140}
+        height={36}
+        priority
+        className={cn("theme-light-only", className)}
+      />
+    </>
+  );
+}
 
 function useSafeNext(searchParams: ReturnType<typeof useSearchParams>) {
   const raw = searchParams.get("next")?.trim() ?? "";
@@ -223,14 +247,7 @@ function LoginFormInner() {
                     href="/"
                     className="mb-8 inline-flex outline-none ring-offset-2 ring-offset-white transition hover:opacity-90 focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
-                    <Image
-                      src={LOGO_SRC}
-                      alt="Autolokate"
-                      width={140}
-                      height={36}
-                      priority
-                      className="h-8 w-auto sm:h-9"
-                    />
+                    <BrandWordmark className="h-8 w-auto sm:h-9" />
                   </Link>
                   <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
                     Sign in with OTP
@@ -294,14 +311,7 @@ function LoginFormInner() {
                     href="/"
                     className="mb-6 inline-flex outline-none ring-offset-2 ring-offset-white transition hover:opacity-90 focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
-                    <Image
-                      src={LOGO_SRC}
-                      alt="Autolokate"
-                      width={140}
-                      height={36}
-                      priority
-                      className="h-8 w-auto sm:h-9"
-                    />
+                    <BrandWordmark className="h-8 w-auto sm:h-9" />
                   </Link>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Autolokate</p>
                   <p className="mt-1 text-sm font-medium text-muted-foreground">Secure access</p>

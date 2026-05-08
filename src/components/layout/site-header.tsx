@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { SmartSearchBar } from "@/components/marketplace/smart-search-bar";
 import { GA_CATEGORIES, trackEvent } from "@/lib/analytics";
 import { useAuthStore } from "@/stores/auth-store";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const links = [
   { id: "dealers", href: "/companies", label: "Dealers" },
@@ -129,11 +130,11 @@ export function SiteHeader() {
     const baseClasses =
       theme === "dark"
         ? "rounded-full border border-white/15 bg-linear-to-br from-emerald-500/20 via-teal-500/15 to-cyan-500/20 p-1.5 shadow-[0_10px_30px_-12px_rgba(16,185,129,0.65)] ring-1 ring-emerald-300/20 transition hover:scale-[1.03] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-        : "rounded-full border border-border/60 bg-linear-to-br from-zinc-200/90 via-zinc-100/70 to-zinc-200/50 p-1.5 shadow-[0_12px_30px_-14px_rgba(24,24,27,0.18)] ring-1 ring-zinc-300/60 transition hover:scale-[1.03] focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0";
+        : "rounded-full border border-border bg-card p-1.5 shadow-[0_12px_30px_-14px_rgba(0,0,0,0.45)] ring-1 ring-primary/25 transition hover:scale-[1.03] hover:ring-primary/45 focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0";
     const iconClasses =
       theme === "dark"
         ? "flex h-7 w-7 items-center justify-center rounded-full bg-zinc-950/70 text-emerald-100"
-        : "flex h-7 w-7 items-center justify-center rounded-full bg-background/85 text-foreground";
+        : "flex h-7 w-7 items-center justify-center rounded-full bg-background text-foreground";
 
     return (
       <DropdownMenu>
@@ -299,12 +300,12 @@ export function SiteHeader() {
             className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center rounded-xl px-3 py-1 outline-none ring-1 ring-white/10 ring-offset-2 ring-offset-zinc-950 transition hover:ring-emerald-500/30 focus-visible:ring-2 focus-visible:ring-emerald-500/40"
           >
             <Image
-              src="https://autolokate.com/autolokate_light.png"
+              src="https://autolokate.com/autolokate_dark.png"
               alt="Autolokate"
               width={140}
               height={36}
               priority
-              className="h-[1.35rem] w-auto opacity-95 brightness-0 invert sm:h-7"
+              className="h-[1.35rem] w-auto opacity-95 sm:h-7"
             />
           </Link>
 
@@ -408,12 +409,20 @@ export function SiteHeader() {
       <div className="mx-auto flex min-h-14 max-w-7xl items-center gap-3 px-5 py-3.5 sm:min-h-16 sm:gap-4 sm:px-8 sm:py-4 lg:px-10">
         <Link href="/" className="flex shrink-0 items-center rounded-lg outline-none ring-offset-background transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2">
           <Image
+            src="https://autolokate.com/autolokate_dark.png"
+            alt="Autolokate"
+            width={140}
+            height={36}
+            priority
+            className="theme-dark-only h-8 w-auto sm:h-9"
+          />
+          <Image
             src="https://autolokate.com/autolokate_light.png"
             alt="Autolokate"
             width={140}
             height={36}
             priority
-            className="h-8 w-auto sm:h-9"
+            className="theme-light-only h-8 w-auto sm:h-9"
           />
         </Link>
 
@@ -434,9 +443,9 @@ export function SiteHeader() {
                 })
               }
               className={cn(
-                "rounded-lg px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+                "rounded-full px-3.5 py-2 text-sm font-medium text-foreground/70 transition-colors hover:bg-white/8 hover:text-foreground",
                 pathname === l.href || pathname.startsWith(l.href + "/")
-                  ? "bg-secondary text-foreground shadow-sm"
+                  ? "bg-primary/15 text-primary shadow-sm"
                   : ""
               )}
             >
@@ -466,6 +475,7 @@ export function SiteHeader() {
           >
             <Search className="h-4 w-4" />
           </Button>
+          <ThemeToggle />
           {/* Chat nav icon hidden for now.
           <Button
             variant="ghost"
@@ -536,7 +546,12 @@ export function SiteHeader() {
               <Link
                 key={l.id}
                 href={l.href}
-                className="rounded-xl px-4 py-3 text-sm font-medium text-foreground transition hover:bg-secondary"
+                className={cn(
+                  "rounded-xl px-4 py-3 text-sm font-medium text-foreground/85 transition hover:bg-white/8 hover:text-foreground",
+                  pathname === l.href || pathname.startsWith(l.href + "/")
+                    ? "bg-primary/15 text-primary"
+                    : ""
+                )}
                 onClick={() => {
                   trackEvent("menu_click", {
                     menu: l.id,

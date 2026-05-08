@@ -7,6 +7,7 @@ import { AnalyticsPlaceholder } from "@/components/seo/analytics-placeholder";
 import { JsonLdScript, organizationJsonLd, webSiteJsonLd } from "@/components/seo/json-ld";
 import { GaPageTracker } from "@/components/analytics/ga-page-tracker";
 import { SITE_NAME } from "@/lib/seo/site";
+import { themeBootstrapScript } from "@/providers/theme-provider";
 import { Providers } from "./providers";
 
 const inter = Inter({
@@ -84,14 +85,21 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbfafc" },
-    { media: "(prefers-color-scheme: dark)", color: "#18131f" },
+    { media: "(prefers-color-scheme: light)", color: "#0a0a0f" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0f" },
   ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable}`}>
+    <html lang="en" className={`${inter.variable} ${display.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          // Synchronous: runs before <body> paints so the chosen theme is on <html>
+          // immediately and there is no light/dark flash on reload.
+          dangerouslySetInnerHTML={{ __html: themeBootstrapScript }}
+        />
+      </head>
       <body
         className="min-h-screen bg-background font-sans text-foreground antialiased font-features-['cv02','cv03','cv04','cv11']"
         suppressHydrationWarning
