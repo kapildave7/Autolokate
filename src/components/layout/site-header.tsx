@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Car,
   Fuel,
   IndianRupee,
@@ -84,7 +83,6 @@ export function SiteHeader() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const completeProfile = useAuthStore((s) => s.completeProfile);
-  const isBookExpert = pathname === "/book-expert";
   /** Require both persisted session and tokens—avoids avatar when tokens are cleared but store was stale. */
   const isLoggedIn = isAuthenticated && hasAuthTokens();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -533,133 +531,6 @@ export function SiteHeader() {
       </DialogContent>
     </Dialog>
   );
-
-  if (isBookExpert) {
-    return (
-      <>
-        <motion.header
-          initial={{ y: -8, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-x-0 top-0 z-50 border-b border-white/8 bg-zinc-950/90 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.85),inset_0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-2xl backdrop-saturate-150 supports-backdrop-filter:bg-zinc-950/82"
-        >
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-emerald-500/35 to-transparent"
-          aria-hidden
-        />
-        <div className="relative mx-auto flex h-13 max-w-6xl items-center justify-between gap-3 px-4 sm:h-14 sm:px-6">
-          <Link
-            href="/"
-            className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/4 py-1.5 pl-2 pr-3.5 text-sm font-medium text-zinc-300 outline-none transition hover:border-emerald-500/25 hover:bg-white/8 hover:text-white focus-visible:ring-2 focus-visible:ring-emerald-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-          >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900/80 text-zinc-400 transition group-hover:bg-emerald-500/15 group-hover:text-emerald-300">
-              <ArrowLeft className="h-3.5 w-3.5" />
-            </span>
-            <span className="hidden sm:inline">Back</span>
-          </Link>
-
-          <Link
-            href="/"
-            className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center rounded-xl px-3 py-1 outline-none ring-1 ring-white/10 ring-offset-2 ring-offset-zinc-950 transition hover:ring-emerald-500/30 focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-          >
-            <Image
-              src="https://autolokate.com/autolokate_dark.png"
-              alt="Autolokate"
-              width={140}
-              height={36}
-              priority
-              className="h-[1.35rem] w-auto opacity-95 sm:h-7"
-            />
-          </Link>
-
-          <div className="flex shrink-0 items-center gap-1 rounded-full border border-white/10 bg-zinc-900/60 p-1 pl-1.5 shadow-inner shadow-black/20">
-            {/* Chat nav icon hidden for now.
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 rounded-full text-zinc-400 hover:bg-white/10 hover:text-white"
-              asChild
-            >
-              <Link
-                href="/chat"
-                aria-label="Messages"
-                onClick={() =>
-                  trackEvent("cta_click", {
-                    event_category: GA_CATEGORIES.navigation,
-                    event_label: "chat",
-                    link_href: "/chat",
-                    section: "header_book_expert",
-                  })
-                }
-              >
-                <MessageCircle className="h-4 w-4" />
-              </Link>
-            </Button>
-            */}
-            {isLoggedIn ? (
-              <div className="inline-flex">
-                <AvatarMenu theme="dark" />
-              </div>
-            ) : (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 shrink-0 border-white/20 bg-white/5 px-3 text-xs font-semibold text-white hover:bg-white/10 hover:text-white"
-                asChild
-              >
-                <Link
-                  href="/login"
-                  onClick={() =>
-                    trackEvent("cta_click", {
-                      event_category: GA_CATEGORIES.navigation,
-                      event_label: "login",
-                      section: "header_book_expert",
-                    })
-                  }
-                >
-                  Log in
-                </Link>
-              </Button>
-            )}
-            <button
-              type="button"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/10 hover:text-white sm:hidden"
-              aria-label="Open menu"
-              onClick={() => setOpen((v) => !v)}
-            >
-              <Menu className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {open ? (
-          <div className="relative border-t border-white/8 bg-zinc-950/98 px-4 py-4 backdrop-blur-xl sm:px-6">
-            <div className="mx-auto flex max-w-6xl flex-col gap-1">
-              {links.map((l) => (
-                <Link
-                  key={l.id}
-                  href={l.href}
-                  className="rounded-xl px-4 py-3 text-sm font-medium text-zinc-200 transition hover:bg-white/6"
-                  onClick={() => {
-                    trackEvent("menu_click", {
-                      menu: l.id,
-                      location: "mobile_book_expert",
-                      event_category: GA_CATEGORIES.navigation,
-                    });
-                    setOpen(false);
-                  }}
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        </motion.header>
-        {profileDialog}
-      </>
-    );
-  }
 
   return (
     <>

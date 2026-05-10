@@ -24,16 +24,9 @@ const skipLink = (
   </a>
 );
 
-function isBookExpertPath(pathname: string | null): boolean {
-  if (!pathname) return false;
-  const norm = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
-  return norm === "/book-expert";
-}
-
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const minimal = isAuthLikePath(pathname);
-  const bookExpertPage = isBookExpertPath(pathname);
   const adminPath = Boolean(pathname?.startsWith("/admin"));
 
   if (minimal) {
@@ -58,11 +51,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       <SiteHeader />
       <main
         id="main-content"
-        className={cn(
-          "relative min-h-0 min-w-0 flex-1 touch-manipulation pt-14 sm:pt-16",
-          /* Same bg as book-expert page — avoids a light strip under the fixed header */
-          bookExpertPage && "bg-[#050506] text-zinc-100"
-        )}
+        className="relative min-h-0 min-w-0 flex-1 touch-manipulation pt-14 sm:pt-16"
       >
         <SitePathBreadcrumbs />
         {children}
