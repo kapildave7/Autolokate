@@ -238,10 +238,10 @@ export function PreferenceNoMatchesCompletion({ reduceMotion, onContinue }: Prop
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={reduceMotion ? undefined : { opacity: 0, y: -8, transition: { duration: 0.2 } }}
       transition={{ type: "spring", stiffness: 300, damping: 32 }}
-      className="flex min-h-[min(20rem,48vh)] flex-col items-center justify-center px-6 py-12 text-center sm:px-10 sm:py-14"
+      className="flex min-h-[min(20rem,48vh)] flex-col items-center justify-center bg-zinc-50 px-6 py-12 text-center dark:bg-zinc-950 sm:px-10 sm:py-14"
     >
       <div className="flex max-w-md flex-col items-center">
-        <div className="mb-7 flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-muted/50 text-foreground shadow-sm">
+        <div className="mb-7 flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-500 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
           <CarFront className="h-7 w-7 opacity-85" aria-hidden />
         </div>
 
@@ -262,7 +262,7 @@ export function PreferenceNoMatchesCompletion({ reduceMotion, onContinue }: Prop
           type="button"
           variant="outline"
           size="sm"
-          className="mt-8 h-9 gap-2 rounded-xl border-border px-4 text-sm font-medium"
+          className="mt-8 h-9 gap-2 rounded-xl border-zinc-300 bg-white px-4 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
           asChild
         >
           <Link href="/brands">
@@ -341,7 +341,7 @@ export function PreferenceCompletionCelebration({ reduceMotion, onContinue }: Pr
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={reduceMotion ? undefined : { opacity: 0, y: -8, transition: { duration: 0.2 } }}
       transition={{ type: "spring", stiffness: 300, damping: 32 }}
-      className="flex min-h-[min(20rem,48vh)] flex-col items-center justify-center px-6 py-12 text-center sm:px-10 sm:py-14"
+      className="flex min-h-[min(20rem,48vh)] flex-col items-center justify-center bg-zinc-50 px-6 py-12 text-center dark:bg-zinc-950 sm:px-10 sm:py-14"
     >
       <AnimatePresence mode="wait">
         {phase === "confetti" ? (
@@ -352,7 +352,7 @@ export function PreferenceCompletionCelebration({ reduceMotion, onContinue }: Pr
             exit={{ opacity: 0, transition: { duration: 0.2 } }}
             className="flex max-w-md flex-col items-center"
           >
-            <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl border border-border/80 bg-muted/50 text-foreground shadow-sm">
+            <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-500 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
               <Loader2 className="h-7 w-7 animate-spin opacity-80" aria-hidden />
             </div>
             <h2 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
@@ -375,7 +375,7 @@ export function PreferenceCompletionCelebration({ reduceMotion, onContinue }: Pr
               initial={reduceMotion ? undefined : { scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: reduceMotion ? 0 : 0.05, type: "spring", stiffness: 340, damping: 26 }}
-              className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-muted/40 shadow-sm"
+              className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800"
             >
               <motion.div
                 className={ICON_DARK_GREEN}

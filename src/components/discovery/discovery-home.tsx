@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { BanknoteIcon, Car, Flame, MapPin, Pencil, Sparkles, Tag, Users } from "lucide-react";
 import { GA_CATEGORIES, trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,11 +26,26 @@ import { HomePlatformHighlights } from "@/components/home/home-platform-highligh
 
 type SortBy = "price-asc" | "price-desc" | "mileage" | "popularity";
 
+const STEP_META: Record<string, { label: string; Icon: React.ElementType }> = {
+  city:         { label: "City",      Icon: MapPin },
+  budget:       { label: "Budget",    Icon: BanknoteIcon },
+  body:         { label: "Body type", Icon: Car },
+  body_type:    { label: "Body type", Icon: Car },
+  fuel:         { label: "Fuel",      Icon: Flame },
+  fuel_type:    { label: "Fuel",      Icon: Flame },
+  seating:      { label: "Seats",     Icon: Users },
+  use_case:     { label: "Usage",     Icon: Users },
+  usage:        { label: "Usage",     Icon: Users },
+  priority:     { label: "Priority",  Icon: Sparkles },
+  features:     { label: "Features",  Icon: Sparkles },
+};
+
 export function DiscoveryHome() {
   const reduceMotion = useReducedMotion();
   const [sort, setSort] = useState<SortBy>("popularity");
   const [visibleCount, setVisibleCount] = useState(6);
   const promptSnapshot = usePreferenceFinderStore((s) => s.promptSnapshot);
+  const answerHistory = usePreferenceFinderStore((s) => s.answerHistory);
   const advisorResultsPayload = usePreferenceFinderStore((s) => s.advisorResults);
   const bootstrapping = usePreferenceFinderStore((s) => s.bootstrapping);
   const submitting = usePreferenceFinderStore((s) => s.submitting);
@@ -113,141 +128,198 @@ export function DiscoveryHome() {
           >
             <div className="relative overflow-hidden rounded-[1.35rem] border border-border/80 bg-card p-6 shadow-premium ring-1 ring-foreground/[0.04] sm:p-8 lg:p-10">
               <div
-                className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-primary/[0.06] blur-3xl"
+                className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-blue-500/[0.06] blur-3xl"
                 aria-hidden
               />
               <div
-                className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-zinc-400/[0.07] blur-3xl"
+                className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-zinc-400/[0.05] blur-3xl"
                 aria-hidden
               />
+
               <div className="relative">
-              <div className="mb-8 flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
-                <div className="min-w-0 space-y-3">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground">
-                    <Sparkles className="h-3.5 w-3.5 text-foreground/70" aria-hidden />
-                    {!loading ? (
-                      <span>
-                        <span className="tabular-nums text-foreground">{displayMatchCount}</span>
-                        {" live match"}
-                        {displayMatchCount === 1 ? "" : "es"}
-                      </span>
-                    ) : (
-                      "Updating matches…"
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                      Your matched cars
+                {/* Header row */}
+                <div className="mb-6 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+                  <div className="min-w-0 space-y-2">
+                    {/* Live matches pill */}
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                      <Sparkles className="h-3.5 w-3.5 text-blue-500" aria-hidden />
+                      {!loading ? (
+                        <span>
+                          <span className="tabular-nums text-foreground">{displayMatchCount}</span>
+                          {" live match"}
+                          {displayMatchCount === 1 ? "" : "es"}
+                        </span>
+                      ) : (
+                        "Updating matches…"
+                      )}
+                    </div>
+
+                    {/* Heading */}
+                    <h2 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                      Your{" "}
+                      <span className="text-primary">matched</span>{" "}
+                      cars
                     </h2>
                     <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
-                      {recommendationLine}
+                      {promptSnapshot.city || promptSnapshot.budget
+                        ? "Results based on your questionnaire answers."
+                        : recommendationLine}
                     </p>
                     {resultsMeta.aiSummary ? (
-                      <p className="max-w-2xl border-l-2 border-border pl-4 text-sm leading-relaxed text-foreground sm:text-[0.9375rem]">
+                      <p className="max-w-2xl border-l-2 border-blue-500/40 pl-4 text-sm leading-relaxed text-foreground sm:text-[0.9375rem]">
                         {resultsMeta.aiSummary}
                       </p>
                     ) : null}
                   </div>
-                </div>
-                <div className="flex w-full shrink-0 flex-col gap-2 lg:w-[min(100%,280px)]">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Sort by
-                  </span>
-                  <Select
-                    value={sort}
-                    onValueChange={(v) => {
-                      setSort(v as SortBy);
-                      trackEvent("sort_change", { event_category: GA_CATEGORIES.home, sort: v });
-                    }}
-                  >
-                    <SelectTrigger
-                      id="matched-cars-sort"
-                      aria-label="Sort matched cars"
-                      className={cn(
-                        "h-11 w-full cursor-pointer rounded-xl border border-border bg-background px-3.5 text-left text-sm font-medium text-foreground shadow-sm",
-                        "transition-colors hover:border-border hover:bg-muted/30",
-                        "focus:ring-2 focus:ring-ring/35 focus:ring-offset-0",
-                        "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-foreground/70 [&>svg]:opacity-100"
-                      )}
-                    >
-                      <SelectValue placeholder="Choose sort order" />
-                    </SelectTrigger>
-                    <SelectContent
-                      align="end"
-                      position="popper"
-                      sideOffset={6}
-                      className="z-[200] max-h-[min(22rem,var(--radix-select-content-available-height))] w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] rounded-xl border border-border bg-card p-1.5 text-foreground shadow-lg"
-                    >
-                      <SelectItem value="popularity" className="cursor-pointer rounded-lg py-2.5 pl-9 pr-3 text-sm font-medium data-[highlighted]:bg-muted">
-                        Best match
-                      </SelectItem>
-                      <SelectItem value="price-asc" className="cursor-pointer rounded-lg py-2.5 pl-9 pr-3 text-sm data-[highlighted]:bg-muted">
-                        Price: low to high
-                      </SelectItem>
-                      <SelectItem value="price-desc" className="cursor-pointer rounded-lg py-2.5 pl-9 pr-3 text-sm data-[highlighted]:bg-muted">
-                        Price: high to low
-                      </SelectItem>
-                      <SelectItem value="mileage" className="cursor-pointer rounded-lg py-2.5 pl-9 pr-3 text-sm data-[highlighted]:bg-muted">
-                        Mileage (best first)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
-              {loading ? (
-                <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="skeleton-shimmer flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm"
+                  {/* Sort */}
+                  <div className="flex w-full shrink-0 flex-col gap-2 lg:w-[min(100%,240px)]">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      Sort by
+                    </span>
+                    <Select
+                      value={sort}
+                      onValueChange={(v) => {
+                        setSort(v as SortBy);
+                        trackEvent("sort_change", { event_category: GA_CATEGORIES.home, sort: v });
+                      }}
                     >
-                      <div className="aspect-16/10 bg-muted sm:aspect-5/3" />
-                      <div className="space-y-2.5 border-b border-border p-4">
-                        <div className="h-5 w-2/3 rounded-md bg-muted" />
-                        <div className="h-4 w-full rounded-md bg-muted" />
-                        <div className="h-16 rounded-lg bg-muted" />
-                      </div>
-                      <div className="h-12 border-t border-border bg-muted/20" />
-                    </div>
-                  ))}
+                      <SelectTrigger
+                        id="matched-cars-sort"
+                        aria-label="Sort matched cars"
+                        className={cn(
+                          "h-10 w-full cursor-pointer rounded-xl border border-border bg-background px-3.5 text-left text-sm font-medium text-foreground shadow-sm",
+                          "transition-colors hover:border-border hover:bg-muted/30",
+                          "focus:ring-2 focus:ring-blue-400/30 focus:ring-offset-0",
+                          "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-foreground/70 [&>svg]:opacity-100"
+                        )}
+                      >
+                        <SelectValue placeholder="Choose sort order" />
+                      </SelectTrigger>
+                      <SelectContent
+                        align="end"
+                        position="popper"
+                        sideOffset={6}
+                        className="z-[200] max-h-[min(22rem,var(--radix-select-content-available-height))] w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] rounded-xl border border-border bg-card p-1.5 text-foreground shadow-lg"
+                      >
+                        <SelectItem value="popularity" className="cursor-pointer rounded-lg py-2.5 pl-9 pr-3 text-sm font-medium data-[highlighted]:bg-muted">
+                          Best match
+                        </SelectItem>
+                        <SelectItem value="price-asc" className="cursor-pointer rounded-lg py-2.5 pl-9 pr-3 text-sm data-[highlighted]:bg-muted">
+                          Price: low to high
+                        </SelectItem>
+                        <SelectItem value="price-desc" className="cursor-pointer rounded-lg py-2.5 pl-9 pr-3 text-sm data-[highlighted]:bg-muted">
+                          Price: high to low
+                        </SelectItem>
+                        <SelectItem value="mileage" className="cursor-pointer rounded-lg py-2.5 pl-9 pr-3 text-sm data-[highlighted]:bg-muted">
+                          Mileage (best first)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-                    {filtered.slice(0, visibleCount).map((row) => (
-                      <AiMatchedCarCard
-                        key={row.id}
-                        row={row}
-                        onNavigate={() =>
-                          trackEvent("ai_matched_car_card_click", {
-                            event_category: GA_CATEGORIES.home,
-                            model_id: row.id,
-                            path: row.href ?? "",
-                          })
-                        }
-                      />
+
+                {/* Filter chips — one per answered step */}
+                {answerHistory.length > 0 ? (
+                  <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-border pb-6">
+                    {answerHistory.map((a) => {
+                      const meta = STEP_META[a.step_id] ?? { label: a.step_id, Icon: Tag };
+                      const { label, Icon } = meta;
+                      const value = (a.display_labels ?? []).join(", ") || (a.selected_option_ids ?? []).join(", ");
+                      if (!value) return null;
+                      return (
+                        <span
+                          key={a.step_id}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium",
+                            "border-border/80 bg-card text-foreground shadow-sm",
+                            "dark:border-zinc-700/80 dark:bg-zinc-800/60 dark:text-zinc-200"
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                          {label}: {value}
+                        </span>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        trackEvent("edit_preferences_click", { event_category: GA_CATEGORIES.home });
+                        document.getElementById("preference-finder-stepper")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-1 py-1.5 text-xs font-semibold text-primary transition hover:text-primary/75"
+                    >
+                      <Pencil className="h-3 w-3" aria-hidden />
+                      Edit preferences
+                    </button>
+                  </div>
+                ) : null}
+
+                {/* Cards */}
+                {loading ? (
+                  <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="skeleton-shimmer flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                      >
+                        {/* Full-width image */}
+                        <div className="aspect-[16/9] w-full bg-muted" />
+                        {/* Two-column body */}
+                        <div className="flex gap-4 px-4 py-4">
+                          <div className="flex-1 space-y-2">
+                            <div className="h-5 w-3/4 rounded-md bg-muted" />
+                            <div className="h-3.5 w-1/2 rounded bg-muted" />
+                            <div className="mt-3 h-3 w-1/4 rounded bg-muted" />
+                            <div className="h-4 w-2/3 rounded-md bg-muted" />
+                          </div>
+                          <div className="w-[45%] space-y-2.5">
+                            <div className="h-3 w-full rounded bg-muted" />
+                            <div className="h-3 w-full rounded bg-muted" />
+                            <div className="h-3 w-4/5 rounded bg-muted" />
+                            <div className="h-3 w-full rounded bg-muted" />
+                          </div>
+                        </div>
+                        <div className="mt-auto h-10 border-t border-border bg-muted/20" />
+                      </div>
                     ))}
                   </div>
-                  {visibleCount < filtered.length ? (
-                    <div className="mt-8 text-center">
-                      <Button
-                        variant="listing"
-                        className="px-6"
-                        onClick={() => {
-                          setVisibleCount((c) => c + 6);
-                          trackEvent("load_more_click", {
-                            event_category: GA_CATEGORIES.home,
-                            current_count: visibleCount,
-                          });
-                        }}
-                      >
-                        Load more cars
-                      </Button>
+                ) : (
+                  <>
+                    <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+                      {filtered.slice(0, visibleCount).map((row) => (
+                        <AiMatchedCarCard
+                          key={row.id}
+                          row={row}
+                          onNavigate={() =>
+                            trackEvent("ai_matched_car_card_click", {
+                              event_category: GA_CATEGORIES.home,
+                              model_id: row.id,
+                              path: row.href ?? "",
+                            })
+                          }
+                        />
+                      ))}
                     </div>
-                  ) : null}
-                </>
-              )}
+                    {visibleCount < filtered.length ? (
+                      <div className="mt-8 text-center">
+                        <Button
+                          variant="outline"
+                          className="rounded-xl border-border bg-card px-8 text-sm font-semibold text-foreground hover:bg-muted/50 hover:border-border/80"
+                          onClick={() => {
+                            setVisibleCount((c) => c + 6);
+                            trackEvent("load_more_click", {
+                              event_category: GA_CATEGORIES.home,
+                              current_count: visibleCount,
+                            });
+                          }}
+                        >
+                          Load more cars
+                        </Button>
+                      </div>
+                    ) : null}
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, ChevronRight, Gauge, GitCompare } from "lucide-react";
+import { ArrowRight, Check, GitCompare } from "lucide-react";
 import type { AdvisorMatchCard } from "@/lib/advisor-results-normalize";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,19 +19,21 @@ type Props = {
 };
 
 const shellStyles = cn(
-  "group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card text-left text-[0.9375rem] shadow-[0_4px_18px_-12px_rgba(15,23,42,0.1)] ring-1 ring-black/[0.03] sm:text-[0.96875rem]",
-  "transition-[transform,box-shadow,border-color] duration-200",
-  "hover:-translate-y-0.5 hover:border-primary/15 hover:shadow-[0_12px_28px_-16px_rgba(15,23,42,0.14)]",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+  "group flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card text-left",
+  "shadow-[0_2px_16px_-6px_rgba(0,0,0,0.14)]",
+  "transition-[transform,box-shadow,border-color] duration-200 ease-out",
+  "hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.2),0_0_0_1px_rgba(37,99,235,0.1)]",
+  "motion-reduce:transition-none motion-reduce:hover:translate-y-0"
 );
 
 export function AiMatchedCarCard({ row, onNavigate }: Props) {
   const router = useRouter();
   const addVariant = useCompareStore((s) => s.addVariant);
   const removeVariant = useCompareStore((s) => s.removeVariant);
-  const hasVariant = useCompareStore((s) => (row.catalogueVariantId ? s.hasVariant(row.catalogueVariantId) : false));
+  const hasVariant = useCompareStore((s) =>
+    row.catalogueVariantId ? s.hasVariant(row.catalogueVariantId) : false
+  );
   const trayCount = useCompareStore((s) => s.variantIds.length);
-
   const vid = row.catalogueVariantId;
 
   const toggleCompare = useCallback(
@@ -41,12 +43,7 @@ export function AiMatchedCarCard({ row, onNavigate }: Props) {
       if (!vid) return;
       if (hasVariant) {
         removeVariant(vid);
-        trackEvent("compare_tray_toggle", {
-          event_category: GA_CATEGORIES.compare,
-          action: "remove",
-          source: "ai_match_card",
-          variant_id: vid,
-        });
+        trackEvent("compare_tray_toggle", { event_category: GA_CATEGORIES.compare, action: "remove", source: "ai_match_card", variant_id: vid });
         return;
       }
       const ok = addVariant(vid);
@@ -56,12 +53,7 @@ export function AiMatchedCarCard({ row, onNavigate }: Props) {
         return;
       }
       toast.success("Added to compare.");
-      trackEvent("compare_tray_toggle", {
-        event_category: GA_CATEGORIES.compare,
-        action: "add",
-        source: "ai_match_card",
-        variant_id: vid,
-      });
+      trackEvent("compare_tray_toggle", { event_category: GA_CATEGORIES.compare, action: "add", source: "ai_match_card", variant_id: vid });
     },
     [vid, hasVariant, addVariant, removeVariant]
   );
@@ -81,108 +73,133 @@ export function AiMatchedCarCard({ row, onNavigate }: Props) {
 
   const main = (
     <>
-      <div className="relative aspect-16/10 w-full shrink-0 overflow-hidden bg-muted sm:aspect-5/3">
+      {/* ── 1. Full-width image with score badge overlaid ── */}
+      <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-muted">
         {row.imageUrl ? (
           <Image
             src={row.imageUrl}
             alt={row.imageAlt}
             fill
-            className="object-cover object-center transition duration-300 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            className="object-cover object-center transition duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 24rem"
             priority={false}
           />
         ) : (
-          <div className="flex h-full min-h-[100px] flex-col items-center justify-center bg-muted px-4 text-center sm:min-h-[108px]">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">No image</span>
+          <div className="flex h-full items-center justify-center">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">No image</span>
+          </div>
+        )}
+
+        {/* Score badge — top-right over image */}
+        {row.score != null && (
+          <div className={cn(
+            "absolute right-3 top-3 flex min-w-[3.25rem] flex-col items-center rounded-xl px-3 py-2",
+            /* light */ "border border-border/80 bg-white/95 shadow-[0_2px_8px_rgba(15,23,42,0.10)] backdrop-blur-md",
+            /* dark  */ "dark:border-blue-400/50 dark:bg-zinc-900/95 dark:shadow-[0_2px_12px_rgba(0,0,0,0.5),0_0_0_1px_rgba(96,165,250,0.2)]"
+          )}>
+            <span className="font-display text-2xl font-bold leading-none tabular-nums text-primary dark:text-white sm:text-[1.75rem]">
+              {row.score}
+            </span>
+            <span className="mt-0.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-blue-400">
+              Match score
+            </span>
           </div>
         )}
       </div>
 
-      {row.score != null ? (
-        <div className="shrink-0 border-b border-border bg-secondary/80 px-2.5 py-1.5 sm:px-3">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[8px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[9px]">Match score</span>
-            <span className="rounded-md border border-border/80 bg-background px-2 py-0.5 font-display text-xs font-semibold tabular-nums tracking-tight text-foreground shadow-sm sm:px-2.5 sm:py-1 sm:text-sm">
-              {row.score}
-            </span>
+      {/* ── 2. Body ── */}
+      <div className="flex flex-1 flex-col px-4 py-4 sm:px-5 sm:py-4">
+
+        {/* Top row: name+subtitle (left) | price (right) */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-base font-bold leading-snug tracking-tight text-foreground sm:text-[1.0625rem]">
+              {row.title}
+            </h3>
+            {row.variantLine ? (
+              <p className="mt-0.5 text-xs font-medium text-muted-foreground">
+                {row.variantLine}
+              </p>
+            ) : null}
+            {row.subtitle ? (
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground/70">
+                {row.subtitle}
+              </p>
+            ) : null}
           </div>
-        </div>
-      ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 px-2.5 pb-2.5 pt-2 sm:gap-2.5 sm:px-3 sm:pb-3 sm:pt-2.5">
-        <div className="rounded-md border border-border/80 bg-muted/35 px-2.5 py-1.5 sm:rounded-lg sm:px-3 sm:py-2">
-          <h3 className="font-display text-[0.875rem] font-semibold leading-snug tracking-tight text-foreground sm:text-[0.9375rem]">
-            {row.title}
-          </h3>
-          {row.variantLine ? (
-            <p className="mt-0.5 text-[0.6875rem] font-medium leading-snug text-foreground/90 sm:mt-1 sm:text-xs">{row.variantLine}</p>
-          ) : null}
-          {row.subtitle ? (
-            <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground sm:mt-1.5 sm:text-[11px] lg:text-xs">{row.subtitle}</p>
-          ) : null}
-        </div>
-
-        <div className="rounded-md border border-border/80 bg-muted/40 px-2.5 py-2 sm:rounded-lg sm:px-3 sm:py-2.5">
-          <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:text-[9px]">Ex-showroom range</p>
-          <p className="mt-0.5 font-display text-sm font-semibold tracking-tight text-foreground sm:mt-1 sm:text-base">
-            {row.priceLabel}
-          </p>
-          {row.mileageKmpl != null ? (
-            <div className="mt-1.5 flex items-start gap-2 border-t border-border/70 pt-1.5 text-[10px] leading-snug text-muted-foreground sm:mt-2 sm:pt-2 sm:text-[11px] lg:text-xs">
-              <Gauge className="mt-0.5 h-2.5 w-2.5 shrink-0 text-muted-foreground sm:h-3 sm:w-3" aria-hidden />
-              <span>
-                Up to <span className="font-medium text-foreground">{row.mileageKmpl} km/l</span>
-                <span className="text-muted-foreground"> (listed variant)</span>
-              </span>
+          {row.priceLabel ? (
+            <div className="shrink-0 text-right">
+              <p className="font-display text-sm font-bold tracking-tight text-primary whitespace-nowrap sm:text-[0.9375rem]">
+                {row.priceLabel}
+              </p>
+              <p className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                Ex-showroom
+              </p>
             </div>
           ) : null}
         </div>
 
-        {row.reasons.length > 0 ? (
-          <ul className="space-y-1">
+        {/* Reasons — 2-column grid */}
+        {row.reasons.length > 0 && (
+          <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
             {row.reasons.slice(0, 4).map((reason) => (
               <li
                 key={reason}
-                className="flex gap-2 rounded-md border border-border/60 bg-muted/25 px-2 py-1.5 text-[10px] leading-snug text-foreground/95 sm:gap-2.5 sm:px-2.5 sm:py-2 sm:text-[11px] lg:text-xs"
+                className="flex items-start gap-1.5 text-[10.5px] leading-snug text-muted-foreground sm:text-[11px]"
               >
                 <span
-                  className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary shadow-sm sm:h-5 sm:w-5"
+                  className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary"
                   aria-hidden
                 >
-                  <Check className="h-2 w-2 sm:h-2.5 sm:w-2.5" strokeWidth={3} />
+                  <Check className="h-2.5 w-2.5" strokeWidth={3} />
                 </span>
-                <span>{reason}</span>
+                {reason}
               </li>
             ))}
           </ul>
-        ) : null}
+        )}
       </div>
 
-      <div className="mt-auto flex items-center justify-between gap-2 border-t border-border bg-muted/25 px-2.5 py-1.5 sm:px-3 sm:py-2">
-        <span className="text-[0.6875rem] font-medium text-foreground sm:text-xs">{row.href ? "View full details" : "Details unavailable"}</span>
+      {/* ── 3. Footer ── */}
+      <div className="mt-auto flex items-center justify-between border-t border-border/50 px-4 py-3 sm:px-5">
         {row.href ? (
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/80 bg-muted/50 text-muted-foreground shadow-sm transition group-hover:border-primary/25 group-hover:bg-primary/10 group-hover:text-primary sm:h-8 sm:w-8">
-            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
+          <span className="flex items-center gap-1 text-sm font-semibold text-primary transition-[gap,opacity] duration-150 group-hover:gap-2 group-hover:opacity-90">
+            View full details
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </span>
-        ) : null}
+        ) : (
+          <span className="text-xs text-muted-foreground">Details unavailable</span>
+        )}
       </div>
     </>
   );
 
   const compareRow =
     vid != null ? (
-      <div className="flex flex-wrap gap-1.5 border-t border-border bg-background/80 px-2.5 py-2 sm:gap-2 sm:px-3 sm:py-2.5">
+      <div className="flex gap-2 border-t border-border/50 bg-muted/20 px-4 py-2.5 sm:px-5">
         <Button
           type="button"
-          variant={hasVariant ? "secondary" : "outline"}
+          variant="outline"
           size="sm"
-          className="h-7 flex-1 gap-1 text-xs sm:h-8 sm:flex-initial sm:text-sm"
+          className={cn(
+            "h-8 flex-1 gap-1.5 rounded-xl border-border/60 text-xs font-semibold text-muted-foreground shadow-none",
+            "hover:border-primary/30 hover:bg-muted/60 hover:text-foreground",
+            hasVariant && "border-primary/30 bg-primary/8 text-primary hover:bg-primary/12"
+          )}
           onClick={toggleCompare}
         >
-          <GitCompare className="h-3.5 w-3.5" />
+          <GitCompare className="h-3.5 w-3.5 shrink-0" />
           {hasVariant ? "Remove" : "Compare"}
         </Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 text-[0.6875rem] sm:h-8 sm:text-xs" disabled={trayCount < 2} onClick={goCompare}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 rounded-xl px-3 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground disabled:opacity-40"
+          disabled={trayCount < 2}
+          onClick={goCompare}
+        >
           Open compare
         </Button>
       </div>

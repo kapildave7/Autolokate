@@ -22,6 +22,9 @@ import { GA_CATEGORIES, trackEvent } from "@/lib/analytics";
 import { hasAuthTokens } from "@/lib/client/auth-storage";
 import { getTrending } from "@/lib/client/catalogue-api";
 import { cn, formatINR } from "@/lib/utils";
+import { indianCities } from "@/data";
+import { usePreferenceFinderStore } from "@/stores/preference-finder-store";
+import { HomeHeroPreferenceWizard } from "@/components/discovery/hero-preference/home-hero-preference-wizard";
 
 type Props = {
   reduceMotion: boolean;
@@ -220,6 +223,20 @@ export function HomeHeroSection({ reduceMotion }: Props) {
     () => false
   );
 
+  const promptSnapshot = usePreferenceFinderStore((s) => s.promptSnapshot);
+
+  const recommendationLine = useMemo(() => {
+    if (!promptSnapshot.city || !promptSnapshot.body || !promptSnapshot.fuel || !promptSnapshot.budget) {
+      return "Finish the questionnaire to refresh your match list from the catalogue.";
+    }
+    return `Showing matches for ${promptSnapshot.city}, ${promptSnapshot.body}, ${promptSnapshot.fuel}, and ${promptSnapshot.budget}.`;
+  }, [promptSnapshot]);
+
+  const scrollToMatches = () => {
+    trackEvent("preference_view_matches_click", { event_category: GA_CATEGORIES.home });
+    document.getElementById("ai-matched-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const recsLabel = "Get Recommendations";
 
   const onLoggedInRecommendations = () => {
@@ -361,7 +378,16 @@ export function HomeHeroSection({ reduceMotion }: Props) {
         </motion.div>
 
         <div className="w-full lg:col-span-5 lg:max-w-md lg:justify-self-end">
-          <TrendingModelsCard reduceMotion={reduceMotion} />
+          {loggedIn ? (
+            <HomeHeroPreferenceWizard
+              reduceMotion={reduceMotion}
+              allCities={indianCities}
+              recommendationLine={recommendationLine}
+              onViewMatches={scrollToMatches}
+            />
+          ) : (
+            <TrendingModelsCard reduceMotion={reduceMotion} />
+          )}
         </div>
       </div>
     </section>

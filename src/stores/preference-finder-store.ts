@@ -56,6 +56,19 @@ function stepToPromptKey(stepId: string): keyof PromptSnapshot | null {
   return null;
 }
 
+/** Rebuild promptSnapshot from a full answer history (used on bootstrap). */
+function snapshotFromHistory(history: PreferenceFinderAnswerEntry[]): PromptSnapshot {
+  const snap: PromptSnapshot = { city: "", body: "", fuel: "", budget: "" };
+  for (const a of history) {
+    const key = stepToPromptKey(a.step_id);
+    if (key) {
+      const label = a.display_labels?.[0]?.trim() || a.selected_option_ids?.[0] || "";
+      if (label) snap[key] = label;
+    }
+  }
+  return snap;
+}
+
 export const usePreferenceFinderStore = create<PreferenceFinderState>((set, get) => ({
   conversationId: null,
   currentStep: null,
@@ -132,8 +145,10 @@ export const usePreferenceFinderStore = create<PreferenceFinderState>((set, get)
       const isCompleted = Boolean(cur?.completed);
       const advisorResults = isCompleted ? await getAdvisorResults(selectedId) : null;
 
+      const finalHistory = cur?.answers ?? detail?.answers ?? [];
       set({
-        answerHistory: cur?.answers ?? detail?.answers ?? [],
+        answerHistory: finalHistory,
+        promptSnapshot: snapshotFromHistory(finalHistory),
         completed: isCompleted,
         pendingCompletionCelebration: false,
         ready: true,
@@ -204,8 +219,10 @@ export const usePreferenceFinderStore = create<PreferenceFinderState>((set, get)
       const isCompleted = Boolean(cur?.completed);
       const advisorResults = isCompleted ? await getAdvisorResults(selectedId) : null;
 
+      const finalHistory = cur?.answers ?? detail?.answers ?? [];
       set({
-        answerHistory: cur?.answers ?? detail?.answers ?? [],
+        answerHistory: finalHistory,
+        promptSnapshot: snapshotFromHistory(finalHistory),
         completed: isCompleted,
         pendingCompletionCelebration: false,
         ready: true,

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Tie Tailwind's dark: variant to the data-theme="dark" attribute so it
+   follows the in-app toggle rather than the OS prefers-color-scheme.  */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* Autolokate — neutral zinc / black / white; green reserved for expert flows (see book-expert & HomeExpertBookCta). */
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

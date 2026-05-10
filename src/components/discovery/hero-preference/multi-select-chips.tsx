@@ -29,22 +29,33 @@ export function MultiSelectChips({ options, selectedIds, onToggle, disabled, red
             disabled={disabled}
             onClick={() => onToggle(op.id)}
             className={cn(
-              "flex items-start gap-3 rounded-2xl border px-4 py-3.5 text-left text-sm font-medium shadow-sm transition sm:px-4 sm:py-4",
+              "flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-left text-sm font-medium shadow-sm transition-all sm:px-4 sm:py-4",
               selected
-                ? "border-zinc-400 bg-zinc-200/90 ring-1 ring-zinc-400/45 dark:border-zinc-500 dark:bg-zinc-300/50 dark:ring-zinc-500/40"
-                : "border-zinc-200/90 bg-white/70 hover:border-zinc-300 hover:bg-white dark:border-zinc-300/50 dark:bg-white/50 dark:hover:border-zinc-400 dark:hover:bg-white/70",
+                ? "border-blue-400 bg-blue-50 ring-1 ring-blue-400/40 dark:border-blue-500/70 dark:bg-blue-500/10 dark:ring-blue-500/30"
+                : "border-zinc-200/80 bg-white hover:border-zinc-300 hover:bg-zinc-50/80 dark:border-zinc-700/70 dark:bg-zinc-800/70 dark:hover:border-zinc-600 dark:hover:bg-zinc-800",
               disabled && "pointer-events-none opacity-50"
             )}
           >
             <span className="relative shrink-0">
-              <OptionIcon option={op} className="h-8 w-8" />
-              {selected ? (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-800 text-white shadow dark:bg-zinc-950">
-                  <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
-                </span>
-              ) : null}
+              <OptionIcon option={op} className="h-9 w-9" />
+              <span
+                className={cn(
+                  "absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full shadow transition-opacity duration-150",
+                  selected
+                    ? "bg-blue-500 opacity-100 dark:bg-blue-400"
+                    : "pointer-events-none opacity-0"
+                )}
+                aria-hidden={!selected}
+              >
+                <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} aria-hidden />
+              </span>
             </span>
-            <span className="min-w-0 flex-1 leading-snug">{op.label}</span>
+            <span className={cn(
+              "min-w-0 flex-1 leading-snug",
+              selected ? "text-blue-700 dark:text-blue-300" : "text-foreground dark:text-zinc-200"
+            )}>
+              {op.label}
+            </span>
           </motion.button>
         );
       })}

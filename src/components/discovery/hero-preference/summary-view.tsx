@@ -34,16 +34,18 @@ export function SummaryView({
       transition={{ type: "spring", stiffness: 260, damping: 30 }}
       className="space-y-6"
     >
-      <header className="space-y-2 border-b border-zinc-200/80 pb-5 dark:border-zinc-300/40">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">Summary</p>
-        <h3 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-[1.65rem] sm:leading-tight">
+      <header className="space-y-2 border-b border-zinc-200/80 pb-5 dark:border-zinc-800">
+        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground dark:text-zinc-500">Summary</p>
+        <h3 className="font-display text-2xl font-bold tracking-tight text-foreground dark:text-zinc-50 sm:text-[1.65rem] sm:leading-tight">
           What you chose
         </h3>
-        <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">{recommendationLine}</p>
+        <p className="max-w-xl text-sm leading-relaxed text-muted-foreground dark:text-zinc-400 sm:text-[0.9375rem]">
+          {recommendationLine}
+        </p>
       </header>
 
       <div>
-        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your answers</p>
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500">Your answers</p>
         <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {answerHistory.map((entry, idx) => {
             const stepMeta = stepMap[entry.step_id];
@@ -54,23 +56,23 @@ export function SummaryView({
                 initial={reduceMotion ? undefined : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.03 + idx * 0.02, duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                className="rounded-xl border border-zinc-200/80 bg-white/90 px-3.5 py-3 shadow-sm ring-1 ring-zinc-950/3 dark:border-zinc-300/45 dark:bg-white/70 dark:ring-white/10"
+                className="rounded-xl border border-zinc-200/80 bg-white px-3.5 py-3 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-800/80"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground dark:text-zinc-500">
                   {formatStepLabel(entry.step_id)}
                 </p>
-                <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{line}</p>
+                <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground dark:text-zinc-100">{line}</p>
               </motion.li>
             );
           })}
         </ul>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-zinc-200/70 pt-5 dark:border-zinc-300/40 sm:flex-row sm:flex-wrap sm:items-stretch">
+      <div className="flex flex-col gap-3 border-t border-zinc-200/70 pt-5 dark:border-zinc-800 sm:flex-row sm:flex-wrap sm:items-stretch">
         <Button
           type="button"
           size="lg"
-          className="h-11 w-full rounded-xl bg-foreground text-background shadow-md transition hover:bg-foreground/90 sm:h-12 sm:min-w-[200px] sm:flex-1 sm:max-w-xs"
+          className="h-11 w-full rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700 dark:bg-blue-500 dark:shadow-blue-500/25 dark:hover:bg-blue-600 sm:h-12 sm:min-w-[200px] sm:flex-1 sm:max-w-xs"
           onClick={onViewMatches}
         >
           View matching cars
@@ -80,7 +82,7 @@ export function SummaryView({
           type="button"
           size="lg"
           variant="outline"
-          className="h-11 w-full rounded-xl border-zinc-300/90 bg-white/90 text-foreground shadow-sm hover:bg-white dark:border-zinc-400 dark:bg-white/60 dark:hover:bg-white/85 sm:h-12 sm:w-auto sm:min-w-[140px]"
+          className="h-11 w-full rounded-xl border-zinc-300 bg-white text-foreground shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-200 dark:hover:bg-zinc-800 sm:h-12 sm:w-auto sm:min-w-[140px]"
           disabled={resetting}
           onClick={() => void onStartOver()}
         >

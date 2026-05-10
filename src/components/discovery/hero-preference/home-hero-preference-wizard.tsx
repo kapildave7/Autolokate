@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Building2, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Building2, Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { hasAuthTokens } from "@/lib/client/auth-storage";
 import { cn } from "@/lib/utils";
@@ -197,7 +197,6 @@ export function HomeHeroPreferenceWizard({ reduceMotion, allCities, recommendati
 
   return (
     <motion.div
-      layout
       id="preference-finder-stepper"
       role="region"
       aria-label="Car preference questionnaire"
@@ -207,7 +206,7 @@ export function HomeHeroPreferenceWizard({ reduceMotion, allCities, recommendati
       className={cn(
         "relative flex w-full flex-col overflow-hidden rounded-2xl",
         loggedIn
-          ? "min-h-[min(18rem,58vh)] border border-border bg-zinc-50 shadow-sm ring-1 ring-border/20 dark:bg-zinc-100"
+          ? "min-h-[min(18rem,58vh)] border border-border bg-zinc-50 shadow-sm ring-1 ring-border/20 dark:border-zinc-800 dark:bg-zinc-950 dark:ring-zinc-800/40"
           : "min-h-0 border-0 bg-transparent shadow-none ring-0"
       )}
     >
@@ -304,22 +303,26 @@ export function HomeHeroPreferenceWizard({ reduceMotion, allCities, recommendati
           </article>
         </div>
       ) : bootstrapping || !ready ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-zinc-50 px-4 py-12 dark:bg-zinc-100 sm:px-5">
-          <Loader2 className="h-8 w-8 animate-spin text-zinc-500 dark:text-zinc-600" />
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-zinc-50 px-4 py-12 dark:bg-zinc-950 sm:px-5">
+          <Loader2 className="h-8 w-8 animate-spin text-zinc-500 dark:text-blue-400" />
           <p className="text-sm text-muted-foreground">Loading questionnaire…</p>
         </div>
       ) : error ? (
-        <div className="flex flex-1 flex-col justify-center bg-zinc-50 px-4 py-8 dark:bg-zinc-100 sm:px-5">
+        <div className="flex flex-1 flex-col justify-center bg-zinc-50 px-4 py-8 dark:bg-zinc-950 sm:px-5">
           <p className="text-sm font-medium text-destructive">{error}</p>
           <Button type="button" variant="outline" className="mt-4 w-fit rounded-xl" onClick={() => { clearError(); void bootstrap(); }}>
             Retry
           </Button>
         </div>
       ) : (
-        <StepperWrapper className="flex min-h-0 flex-1 flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-100">
+        <StepperWrapper className="flex min-h-0 flex-1 flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950">
           {!completed && currentStep ? (
             <>
-              <div className="border-b border-zinc-200/80 bg-zinc-50 px-4 py-4 dark:border-zinc-300/50 dark:bg-zinc-100 sm:px-5 sm:py-4">
+              <div className="border-b border-zinc-200/80 bg-zinc-50 px-4 pb-4 pt-3 dark:border-zinc-800 dark:bg-zinc-950 sm:px-5 sm:pb-4 sm:pt-3">
+                <div className="mb-3 flex items-center gap-1.5 border-b border-zinc-200/60 pb-3 dark:border-zinc-800/80">
+                  <Sparkles className="h-3.5 w-3.5 text-blue-500" aria-hidden />
+                  <span className="text-xs font-semibold tracking-wide text-foreground">Smart Car Finder</span>
+                </div>
                 <StepHeader
                   reduceMotion={reduceMotion}
                   title={currentStep.question}
@@ -329,7 +332,7 @@ export function HomeHeroPreferenceWizard({ reduceMotion, allCities, recommendati
                   percent={progressPct}
                 />
               </div>
-              <div className="relative flex min-h-0 flex-1 flex-col px-4 pb-0 pt-4 sm:px-5 sm:pt-5">
+              <div className="relative flex min-h-0 flex-1 flex-col bg-zinc-50 px-4 pb-0 pt-4 dark:bg-zinc-950 sm:px-5 sm:pt-5">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentStep.step_id}
@@ -409,7 +412,7 @@ export function HomeHeroPreferenceWizard({ reduceMotion, allCities, recommendati
                   initial={reduceMotion ? undefined : { opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex flex-1 flex-col px-4 py-5 sm:px-5 sm:py-6"
+                  className="flex flex-1 flex-col bg-zinc-50 px-4 py-5 dark:bg-zinc-950 sm:px-5 sm:py-6"
                 >
                   <SummaryView
                     reduceMotion={reduceMotion}

@@ -24,15 +24,20 @@ export function StepCardOption({ option, selected, disabled, reduceMotion, index
       disabled={disabled}
       onClick={onSelect}
       className={cn(
-        "flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 sm:gap-4 sm:px-5 sm:py-4",
+        "flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-left shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60 sm:gap-3.5 sm:px-4 sm:py-4",
         selected
-          ? "border-zinc-400 bg-zinc-200/90 ring-1 ring-zinc-400/45 dark:border-zinc-500 dark:bg-zinc-300/50 dark:ring-zinc-500/40"
-          : "border-zinc-200/90 bg-white/70 hover:border-zinc-300 hover:bg-white dark:border-zinc-300/50 dark:bg-white/50 dark:hover:border-zinc-400 dark:hover:bg-white/70",
+          ? "border-blue-400 bg-blue-50 ring-1 ring-blue-400/40 dark:border-blue-500/70 dark:bg-blue-500/10 dark:ring-blue-500/30"
+          : "border-zinc-200/80 bg-white hover:border-zinc-300 hover:bg-zinc-50/80 dark:border-zinc-700/70 dark:bg-zinc-800/70 dark:hover:border-zinc-600 dark:hover:bg-zinc-800",
         disabled && "pointer-events-none opacity-50"
       )}
     >
       <OptionIcon option={option} />
-      <span className="min-w-0 flex-1 pt-0.5 text-sm font-semibold leading-snug text-foreground sm:text-[0.9375rem]">
+      <span className={cn(
+        "min-w-0 flex-1 text-sm font-semibold leading-snug sm:text-[0.9375rem]",
+        selected
+          ? "text-blue-700 dark:text-blue-300"
+          : "text-foreground dark:text-zinc-200"
+      )}>
         {option.label}
       </span>
     </motion.button>
