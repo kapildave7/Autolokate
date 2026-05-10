@@ -39,6 +39,8 @@ function buildStaticSitemap(): MetadataRoute.Sitemap {
   push("/media/comparison", 0.72, "weekly");
   if (FEATURE_FLAGS.dealersEnabled) push("/companies", 0.8, "weekly");
   push("/about", 0.45, "monthly");
+  push("/shop", 0.55, "weekly");
+  push("/shipping-policy", 0.4, "monthly");
   push("/contact", 0.45, "monthly");
   push("/support", 0.5, "monthly");
   push("/privacy", 0.4, "monthly");

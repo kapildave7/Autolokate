@@ -6,35 +6,33 @@ import { Youtube } from "lucide-react";
 import { GA_CATEGORIES, trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
-type FooterLink = { href: string; label: string; id: string; badge?: string };
+type FooterLink = { href: string; label: string; id: string };
 
 const footerSections: { title: string; links: FooterLink[] }[] = [
   {
-    title: "Research",
+    title: "Platform",
     links: [
-      { href: "/compare", label: "Compare", id: "compare" },
-      { href: "/companies", label: "Dealers", id: "dealers" },
-      { href: "/media", label: "Media house", id: "media" },
-      { href: "/blog", label: "Stories", id: "blog" },
-      { href: "/community", label: "Community", id: "community" },
+      { href: "/about", label: "About Us", id: "about" },
+      { href: "/shop", label: "Shop", id: "shop" },
+      { href: "/how-to-use", label: "How to Use", id: "how-to-use" },
+      { href: "/download", label: "Download App", id: "download" },
     ],
   },
   {
-    title: "Company",
+    title: "Support",
     links: [
-      { href: "/about", label: "About", id: "about" },
-      { href: "/contact", label: "Contact", id: "contact" },
-      { href: "/support", label: "Support", id: "support" },
-      { href: "/contact", label: "Careers", id: "careers", badge: "We're hiring" },
+      { href: "/contact", label: "Contact Us", id: "contact" },
+      { href: "/", label: "Try Demo", id: "try-demo" },
+      { href: "/shipping-policy", label: "Shipping Policy", id: "shipping" },
+      { href: "/refund-policy", label: "Returns & Refunds", id: "refunds" },
     ],
   },
   {
     title: "Legal",
     links: [
-      { href: "/privacy", label: "Privacy", id: "privacy" },
-      { href: "/terms", label: "Terms", id: "terms" },
-      { href: "/refund-policy", label: "Refunds", id: "refund" },
-      { href: "/status", label: "API status", id: "status" },
+      { href: "/privacy", label: "Privacy Policy", id: "privacy" },
+      { href: "/terms", label: "Terms of Service", id: "terms" },
+      { href: "/terms", label: "Terms & Conditions", id: "terms-conditions" },
     ],
   },
 ];
@@ -44,14 +42,6 @@ function IconFacebook({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden fill="currentColor">
       <path d="M13.5 9H15V6.5c0-.3 0-1 .1-1.4.2-1.5 1.1-2.9 2.4-3.6 1-.6 2.2-.8 3.5-.8V0h-2.2c-2.4 0-4.6 1-5.9 2.9-.7 1-1 2.1-1 3.5V9h-3v4h3v11h4V13h3.1l.2-4h-3.4V7.2c0-.5 0-1 .2-1.4.3-.8 1-1.2 2-1.2.1 0 .8 0 1.5.1V9z" />
-    </svg>
-  );
-}
-
-function IconX({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="currentColor">
-      <path d="M18.9 3h3.2l-7 8.2L23 21h-6.2l-5-6.5L6.5 21H3.3l7.5-8.8L3 3h6.3l4.5 5.9L18.9 3Z" />
     </svg>
   );
 }
@@ -66,16 +56,6 @@ function IconInstagram({ className }: { className?: string }) {
 
 const socialLinks = [
   {
-    label: "Facebook",
-    href: "https://www.facebook.com/",
-    Icon: IconFacebook,
-  },
-  {
-    label: "X",
-    href: "https://x.com/",
-    Icon: IconX,
-  },
-  {
     label: "Instagram",
     href: "https://www.instagram.com/",
     Icon: IconInstagram,
@@ -84,6 +64,11 @@ const socialLinks = [
     label: "YouTube",
     href: "https://www.youtube.com/@IndianDriveGuide",
     Icon: Youtube,
+  },
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/",
+    Icon: IconFacebook,
   },
 ] as const;
 
@@ -140,8 +125,8 @@ export function SiteFooter() {
               />
             </Link>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
-              A premium automotive research experience — compare specs, read expert media, and explore stories built
-              for confident buying. Demo data only.
+              India&apos;s premier vehicle management platform. Connect, manage, and protect your vehicles
+              with smart QR technology.
             </p>
             <ul className="mt-6 flex flex-wrap gap-2.5" aria-label="Social links">
               {socialLinks.map(({ label, href, Icon }) => (
@@ -175,42 +160,35 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          {footerSections.map((section, si) => (
-            <div
-              key={section.title}
-              className={cn(
-                "min-w-0 lg:border-l lg:border-border/40 lg:pl-8",
-                si === 2 ? "lg:col-span-3" : "lg:col-span-2"
-              )}
-            >
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary sm:text-xs">{section.title}</p>
-              <ul className="mt-4 space-y-0.5">
-                {section.links.map((item) => (
-                  <li key={`${section.title}-${item.id}`}>
-                    <Link
-                      href={item.href}
-                      className="-mx-1 inline-flex flex-wrap items-center gap-2 rounded-md px-1 py-2 text-sm text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground sm:py-1.5"
-                      onClick={() =>
-                        trackEvent("footer_nav_click", {
-                          event_category: GA_CATEGORIES.navigation,
-                          event_label: item.id,
-                          link_href: item.href,
-                          section: section.title.toLowerCase(),
-                        })
-                      }
-                    >
-                      <span>{item.label}</span>
-                      {item.badge ? (
-                        <span className="inline-flex items-center rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary theme-dark-only:border-primary/50 theme-dark-only:bg-primary/15">
-                          {item.badge}
-                        </span>
-                      ) : null}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div className="grid min-w-0 gap-10 sm:grid-cols-3 lg:col-span-7 lg:gap-8 lg:pl-4">
+            {footerSections.map((section) => (
+              <div key={section.title} className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-foreground sm:text-xs">
+                  {section.title}
+                </p>
+                <ul className="mt-4 space-y-0.5">
+                  {section.links.map((item) => (
+                    <li key={`${section.title}-${item.id}`}>
+                      <Link
+                        href={item.href}
+                        className="-mx-1 inline-flex flex-wrap items-center gap-2 rounded-md px-1 py-2 text-sm text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground sm:py-1.5"
+                        onClick={() =>
+                          trackEvent("footer_nav_click", {
+                            event_category: GA_CATEGORIES.navigation,
+                            event_label: item.id,
+                            link_href: item.href,
+                            section: section.title.toLowerCase(),
+                          })
+                        }
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mt-10 border-t border-border/50 pt-4 pb-0 sm:mt-12 sm:pt-5">
