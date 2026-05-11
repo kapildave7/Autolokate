@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { GitCompare, Loader2, Trash2 } from "lucide-react";
+import { GitCompare, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { compareVariantsList, getTrending } from "@/lib/client/catalogue-api";
 import { getTaxonomy } from "@/lib/client/taxonomy-api";
@@ -159,229 +160,272 @@ export function CompareView() {
 
   return (
     <PageFade>
-      <section className="relative overflow-hidden border-b border-border bg-linear-to-b from-secondary/60 via-background to-background">
-        <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div className="absolute -left-16 top-8 h-44 w-44 rounded-full bg-primary/8 blur-3xl" />
-          <div className="absolute right-0 top-0 h-52 w-52 rounded-full bg-primary/8 blur-3xl" />
+      {/* ── Hero Banner ── */}
+      <section className="relative overflow-hidden border-b border-border bg-background dark:bg-background">
+        {/* Banner image — right side, visible on md+ */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-full md:w-3/5 lg:w-1/2" aria-hidden>
+          <Image
+            src="/images/home_footer_light.png"
+            alt=""
+            fill
+            priority
+            className="block object-cover object-left dark:hidden"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+          <Image
+            src="/images/home_footer_dark.png"
+            alt=""
+            fill
+            priority
+            className="hidden object-cover object-left dark:block"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+          {/* left-side fade so text remains readable */}
+          <div className="absolute inset-y-0 left-0 w-2/3 bg-linear-to-r from-background via-background/80 to-transparent" />
         </div>
-        <div className="relative mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl space-y-3">
-              <Badge variant="secondary" className="gap-1 border-border bg-muted text-foreground">
-                <GitCompare className="h-3.5 w-3.5 text-[#14532d] dark:text-[#166534]" />
-                Compare
-              </Badge>
-              <h1 className="font-display text-3xl tracking-tight text-foreground sm:text-4xl lg:text-[2.4rem] lg:leading-tight">
-                Compare variants side by side
-              </h1>
-              <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Focused compare workspace: pick up to three variants, then review only meaningful differences.
-              </p>
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
+
+        <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-14">
+          <div className="max-w-xl space-y-4">
+            <Badge variant="secondary" className="gap-1.5 border-border bg-primary/10 text-primary dark:bg-primary/20">
+              <GitCompare className="h-3.5 w-3.5" />
+              Compare
+            </Badge>
+
+            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-[2.6rem] lg:leading-[1.15]">
+              Compare variants<br className="hidden sm:block" /> side by side
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Focused compare workspace: pick up to three variants, then review only meaningful differences.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-semibold text-foreground shadow-sm">
                 <span className="h-2 w-2 rounded-full bg-primary" />
                 Tray: {variantIds.length}/3 selected
               </div>
-            </div>
-            <div className="flex w-full gap-2 sm:w-auto sm:justify-end">
-              <Button
-                variant="outline"
-                className="h-10 min-h-10 flex-1 rounded-full border-border sm:flex-initial"
-                onClick={() => {
-                  trackEvent("compare_clear_tray", {
-                    event_category: GA_CATEGORIES.compare,
-                    had_count: variantIds.length,
-                  });
-                  clear();
-                }}
-                disabled={variantIds.length === 0}
-              >
-                Clear tray
-              </Button>
-              <Button
-                variant="default"
-                className="h-10 min-h-10 flex-1 rounded-full bg-[#14532d] hover:bg-[#14532d]/90 dark:bg-[#166534] dark:hover:bg-[#166534]/90 sm:flex-initial"
-                disabled={variantIds.length < 2}
-                asChild
-              >
-                <Link
-                  href={compareHref}
-                  onClick={() =>
-                    trackEvent("compare_now", {
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="h-9 rounded-full border-border px-4 text-xs font-semibold"
+                  onClick={() => {
+                    trackEvent("compare_clear_tray", {
                       event_category: GA_CATEGORIES.compare,
-                      variant_count: variantIds.length,
-                    })
-                  }
+                      had_count: variantIds.length,
+                    });
+                    clear();
+                  }}
+                  disabled={variantIds.length === 0}
                 >
-                  Compare now
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          {suggestedPairs.length > 0 ? (
-            <div className="mt-7 rounded-2xl border border-border bg-card/80 p-3.5 shadow-sm ring-1 ring-foreground/5 sm:p-4">
-              <div className="mb-3 flex items-end justify-between gap-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Suggested pairs</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Tap any pair to start a quick 2-variant comparison.</p>
-                </div>
-                <Badge variant="secondary" className="h-6 rounded-full px-2.5 text-[10px]">
-                  Quick start
-                </Badge>
-              </div>
-              <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
-                <div className="flex w-max snap-x snap-mandatory gap-3 pb-1 sm:gap-4">
-                  {suggestedPairs.map(([a, b]) => {
-                    const ids = [a.variantId, b.variantId];
-                    return (
-                      <div
-                        key={`${a.variantId}-${b.variantId}`}
-                        className="group flex w-[min(88vw,372px)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm ring-1 ring-foreground/4 transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md sm:w-[352px]"
-                      >
-                        <div className="grid grid-cols-[1fr_auto_1fr] items-stretch bg-linear-to-b from-muted/20 to-card">
-                          <div className="p-3 sm:p-3.5">
-                            <div className="relative mx-auto aspect-5/3 w-full max-w-[132px] overflow-hidden rounded-xl border border-border/70 bg-muted">
-                              {a.image ? (
-                                <RemoteImageWithFallback src={a.image} alt="" fill className="object-cover" sizes="132px" />
-                              ) : (
-                                <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">—</div>
-                              )}
-                            </div>
-                            <p className="mt-2 line-clamp-1 text-xs font-semibold text-foreground">{a.brand || "Brand"}</p>
-                            <p className="line-clamp-1 text-xs text-muted-foreground">{a.model || "Model"}</p>
-                            <p className="mt-1 text-xs font-bold text-foreground">{a.price != null ? formatINR(a.price) : "—"}</p>
-                          </div>
-                          <div className="flex items-center justify-center border-x border-border px-1">
-                            <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-black tracking-wide text-muted-foreground shadow-sm">
-                              VS
-                            </span>
-                          </div>
-                          <div className="p-3 sm:p-3.5">
-                            <div className="relative mx-auto aspect-5/3 w-full max-w-[132px] overflow-hidden rounded-xl border border-border/70 bg-muted">
-                              {b.image ? (
-                                <RemoteImageWithFallback src={b.image} alt="" fill className="object-cover" sizes="132px" />
-                              ) : (
-                                <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">—</div>
-                              )}
-                            </div>
-                            <p className="mt-2 line-clamp-1 text-xs font-semibold text-foreground">{b.brand || "Brand"}</p>
-                            <p className="line-clamp-1 text-xs text-muted-foreground">{b.model || "Model"}</p>
-                            <p className="mt-1 text-xs font-bold text-foreground">{b.price != null ? formatINR(b.price) : "—"}</p>
-                          </div>
-                        </div>
-                        <div className="border-t border-border bg-muted/30 p-2.5">
-                          <Button
-                            size="sm"
-                            variant="listing"
-                            className="h-8 w-full rounded-full border border-primary/25 bg-background text-primary shadow-sm hover:bg-primary/5"
-                            asChild
-                          >
-                            <Link
-                              href={comparePairHref(ids)}
-                              onClick={() => {
-                                setVariantIds(ids);
-                                trackEvent("compare_suggested_pair_click", {
-                                  event_category: GA_CATEGORIES.compare,
-                                  variant_count: 2,
-                                });
-                              }}
-                            >
-                              Compare now
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                  Clear tray
+                </Button>
+                <Button
+                  variant="default"
+                  className="h-9 rounded-full bg-primary px-4 text-xs font-semibold hover:bg-primary/90"
+                  disabled={variantIds.length < 2}
+                  asChild
+                >
+                  <Link
+                    href={compareHref}
+                    onClick={() =>
+                      trackEvent("compare_now", {
+                        event_category: GA_CATEGORIES.compare,
+                        variant_count: variantIds.length,
+                      })
+                    }
+                  >
+                    Compare now
+                  </Link>
+                </Button>
               </div>
             </div>
-          ) : null}
-
-          <div className="mt-7 grid gap-3 sm:grid-cols-3">
-            {slots.map((i) => {
-              const id = variantIds[i];
-              const row = id ? loadedById.get(id) : undefined;
-              const slotTone = "from-muted/35 to-card";
-              return (
-                <div
-                  key={i}
-                  className={`flex min-h-28 items-center gap-3 rounded-2xl border p-3.5 transition sm:p-4 ${
-                    id
-                      ? `border-border bg-linear-to-b ${slotTone} shadow-sm ring-1 ring-foreground/5`
-                      : "border-dashed border-border bg-muted/20"
-                  }`}
-                >
-                  {id && row ? (
-                    <>
-                      <div className="relative h-14 w-22 shrink-0 overflow-hidden rounded-xl bg-muted/50 sm:h-15 sm:w-24">
-                        {typeof row.image_url === "string" && row.image_url ? (
-                          <RemoteImageWithFallback src={row.image_url} alt="" fill className="object-cover" sizes="96px" />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">—</div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-foreground">
-                          {[row.brand_name, row.model_name].filter(Boolean).join(" ") || "Variant"}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">{String(row.variant_name ?? row.name ?? "")}</p>
-                        <p className="text-xs font-semibold text-foreground">
-                          {(() => {
-                            const p = row.ex_showroom_price ?? row.min_price;
-                            return typeof p === "number" && p > 0 ? formatINR(p) : "—";
-                          })()}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          trackEvent("compare_remove_car", {
-                            event_category: GA_CATEGORIES.compare,
-                            source: "compare_slot",
-                            variant_id: id,
-                          });
-                          removeVariant(id);
-                        }}
-                        className="shrink-0 rounded-xl border border-border bg-secondary/60 p-2 text-muted-foreground transition hover:border-border hover:bg-muted hover:text-foreground"
-                        aria-label="Remove from compare"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </>
-                  ) : id ? (
-                    <div className="flex w-full items-center gap-3">
-                      <Loader2 className="h-5 w-5 shrink-0 animate-spin text-muted-foreground" />
-                      <div className="min-w-0 text-left">
-                        <p className="text-sm font-semibold text-foreground">Loading variant…</p>
-                        <p className="truncate text-xs text-muted-foreground">{id}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex w-full items-center gap-3 text-left">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-border bg-muted/40 text-primary">
-                        <GitCompare className="h-5 w-5" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">Slot {i + 1}</p>
-                        <p className="text-xs text-muted-foreground">Search and add a variant</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>
 
+      {/* ── Main content ── */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+
+        {/* ── Suggested pairs ── */}
+        {suggestedPairs.length > 0 ? (
+          <div className="mb-8 rounded-2xl border border-border bg-card/80 p-4 shadow-sm ring-1 ring-foreground/5 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Suggested Pairs</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Tap any pair to start a quick 2-variant comparison.</p>
+              </div>
+              <Badge variant="secondary" className="h-6 gap-1 rounded-full px-3 text-[10px] font-semibold">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+                </span>
+                Quick start
+              </Badge>
+            </div>
+            <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
+              <div className="flex w-max snap-x snap-mandatory gap-3 pb-1 sm:gap-4">
+                {suggestedPairs.map(([a, b]) => {
+                  const ids = [a.variantId, b.variantId];
+                  return (
+                    <div
+                      key={`${a.variantId}-${b.variantId}`}
+                      className="group flex w-[min(84vw,340px)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md sm:w-[320px]"
+                    >
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-stretch">
+                        {/* Car A */}
+                        <div className="p-3">
+                          <div className="relative mx-auto aspect-5/3 w-full overflow-hidden rounded-lg border border-border/60 bg-muted/60">
+                            {a.image ? (
+                              <RemoteImageWithFallback src={a.image} alt="" fill className="object-cover" sizes="120px" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">—</div>
+                            )}
+                          </div>
+                          <p className="mt-2 line-clamp-1 text-[11px] font-bold text-foreground">{a.brand || "Brand"}</p>
+                          <p className="line-clamp-1 text-[11px] text-muted-foreground">{a.model || "Model"}</p>
+                          <p className="mt-0.5 text-[11px] font-bold text-primary">{a.price != null ? formatINR(a.price) : "—"}</p>
+                        </div>
+
+                        {/* VS divider */}
+                        <div className="flex items-center justify-center px-0.5">
+                          <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[9px] font-black tracking-widest text-muted-foreground">
+                            VS
+                          </span>
+                        </div>
+
+                        {/* Car B */}
+                        <div className="p-3">
+                          <div className="relative mx-auto aspect-5/3 w-full overflow-hidden rounded-lg border border-border/60 bg-muted/60">
+                            {b.image ? (
+                              <RemoteImageWithFallback src={b.image} alt="" fill className="object-cover" sizes="120px" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">—</div>
+                            )}
+                          </div>
+                          <p className="mt-2 line-clamp-1 text-[11px] font-bold text-foreground">{b.brand || "Brand"}</p>
+                          <p className="line-clamp-1 text-[11px] text-muted-foreground">{b.model || "Model"}</p>
+                          <p className="mt-0.5 text-[11px] font-bold text-primary">{b.price != null ? formatINR(b.price) : "—"}</p>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border px-3 py-2.5">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-full rounded-full border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/8"
+                          asChild
+                        >
+                          <Link
+                            href={comparePairHref(ids)}
+                            onClick={() => {
+                              setVariantIds(ids);
+                              trackEvent("compare_suggested_pair_click", {
+                                event_category: GA_CATEGORIES.compare,
+                                variant_count: 2,
+                              });
+                            }}
+                          >
+                            Compare now
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* ── Variant slots ── */}
+        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+          {slots.map((i) => {
+            const id = variantIds[i];
+            const row = id ? loadedById.get(id) : undefined;
+            const num = i + 1;
+            return (
+              <div
+                key={i}
+                className={`relative flex min-h-[5.5rem] items-center gap-3 rounded-2xl border p-3.5 transition ${
+                  id
+                    ? "border-primary/25 bg-card shadow-sm ring-1 ring-primary/10"
+                    : "border-dashed border-border/70 bg-muted/20"
+                }`}
+              >
+                {/* Slot number badge */}
+                <span
+                  className={`absolute left-3.5 top-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                    id ? "bg-primary text-white" : "border border-border bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {num}
+                </span>
+
+                {id && row ? (
+                  <>
+                    <div className="relative mt-4 h-12 w-20 shrink-0 overflow-hidden rounded-xl bg-muted/50">
+                      {typeof row.image_url === "string" && row.image_url ? (
+                        <RemoteImageWithFallback src={row.image_url} alt="" fill className="object-cover" sizes="80px" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">—</div>
+                      )}
+                    </div>
+                    <div className="mt-4 min-w-0 flex-1">
+                      <p className="truncate text-xs font-bold text-foreground">
+                        {[row.brand_name, row.model_name].filter(Boolean).join(" ") || "Variant"}
+                      </p>
+                      <p className="truncate text-[11px] text-muted-foreground">{String(row.variant_name ?? row.name ?? "")}</p>
+                      <p className="mt-0.5 text-[11px] font-semibold text-primary">
+                        {(() => {
+                          const p = row.ex_showroom_price ?? row.min_price;
+                          return typeof p === "number" && p > 0 ? formatINR(p) : "—";
+                        })()}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        trackEvent("compare_remove_car", {
+                          event_category: GA_CATEGORIES.compare,
+                          source: "compare_slot",
+                          variant_id: id,
+                        });
+                        removeVariant(id);
+                      }}
+                      className="mt-4 shrink-0 rounded-full border border-border/80 bg-muted/60 p-1 text-muted-foreground transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30"
+                      aria-label="Remove from compare"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                ) : id ? (
+                  <div className="mt-4 flex w-full items-center gap-3">
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+                    <p className="text-xs font-semibold text-muted-foreground">Loading…</p>
+                  </div>
+                ) : (
+                  <div className="mt-4 flex w-full items-center gap-2.5">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-dashed border-primary/40 bg-primary/5 text-primary">
+                      <Plus className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">Add another variant</p>
+                      <p className="text-[11px] text-muted-foreground">Search and add a variant</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Two-column layout ── */}
         <div className="grid gap-8 xl:grid-cols-12 xl:items-stretch xl:gap-10">
+          {/* Left: search + expert consultation */}
           <div className="flex min-h-0 flex-col gap-6 xl:col-span-5 xl:h-full">
             <div className="shrink-0 space-y-5 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
               <div>
-                <h2 className="text-lg font-bold text-foreground sm:text-xl">Add variants</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Search the catalogue — up to three at a time.</p>
+                <h2 className="text-base font-bold text-foreground sm:text-lg">Add variants</h2>
+                <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Search the catalogue — up to three at a time.</p>
               </div>
               <CatalogueVariantSearch
                 excludeVariantIds={variantIds}
@@ -395,13 +439,17 @@ export function CompareView() {
             </div>
           </div>
 
+          {/* Right: spec matrix */}
           <div className="min-w-0 xl:col-span-7 xl:min-h-0">
             {variantIds.length === 0 ? (
               <Card className="border-dashed border-border bg-muted/20 shadow-sm">
                 <CardContent className="flex flex-col items-center py-12 text-center sm:py-14">
+                  <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary">
+                    <GitCompare className="h-6 w-6" />
+                  </span>
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Empty tray</p>
-                  <p className="mt-3 max-w-md text-lg font-semibold text-foreground sm:text-xl">Nothing to compare yet</p>
-                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                  <p className="mt-2 max-w-md text-lg font-semibold text-foreground sm:text-xl">Nothing to compare yet</p>
+                  <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
                     Start from suggested pairs above or search variants from the left panel.
                   </p>
                 </CardContent>
@@ -440,13 +488,6 @@ export function CompareView() {
 
             {variants.length >= 2 && !isPending && !isError ? (
               <div className="space-y-5">
-                <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Side by side</p>
-                  <h2 className="font-display mt-2 text-xl tracking-tight text-foreground sm:text-2xl">Spec matrix</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Differences across columns are tinted. Data source: catalogue compare API.
-                  </p>
-                </div>
                 <CompareCatalogueMatrix variants={variants} labelMaps={labelMaps} />
               </div>
             ) : null}

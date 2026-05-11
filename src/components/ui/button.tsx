@@ -29,9 +29,9 @@ const buttonVariants = cva(
         /** Listing grids (catalogue + inventory) — soft surface, not the bright blue `cta`. */
         listing:
           "rounded-lg border border-border bg-muted/40 font-semibold text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.25)] hover:bg-muted/70 hover:border-primary/40 hover:shadow-md active:bg-muted/85",
-        /** Expert / book-expert flows — emerald CTA (isolated from site-wide blue `cta`). */
+        /** Expert / book-expert flows — blue CTA. */
         expert:
-          "border border-transparent bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-950/35 hover:from-emerald-500 hover:to-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "border border-transparent bg-linear-to-r from-blue-600 to-blue-700 text-white shadow-md shadow-blue-950/35 hover:from-blue-500 hover:to-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       },
       size: {
         default: "h-10 px-5 py-2",

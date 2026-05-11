@@ -9,17 +9,17 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
 const shell =
-  "relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-linear-to-b from-emerald-950 via-[#061510] to-[#020807] text-zinc-100 antialiased shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85),0_0_0_1px_rgba(16,185,129,0.1),0_0_56px_-24px_rgba(16,185,129,0.18)] ring-1 ring-emerald-500/20 scheme-dark sm:rounded-[1.35rem]";
+  "relative overflow-hidden rounded-2xl border border-blue-500/25 bg-linear-to-b from-blue-950 via-[#020b18] to-[#010610] text-zinc-100 antialiased shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85),0_0_0_1px_rgba(37,99,235,0.1),0_0_56px_-24px_rgba(37,99,235,0.18)] ring-1 ring-blue-500/20 scheme-dark sm:rounded-[1.35rem]";
 
 function ExpertAmbient() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]" aria-hidden>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(16,185,129,0.18),transparent_55%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_100%_80%,rgba(20,184,166,0.1),transparent_50%)]" />
-      <div className="absolute -left-[20%] top-0 h-[70%] w-[85%] rounded-full bg-emerald-500/10 blur-[110px]" />
-      <div className="absolute -right-[12%] bottom-0 h-[45%] w-[60%] rounded-full bg-teal-500/8 blur-[90px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(37,99,235,0.2),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_100%_80%,rgba(59,130,246,0.12),transparent_50%)]" />
+      <div className="absolute -left-[20%] top-0 h-[70%] w-[85%] rounded-full bg-blue-500/10 blur-[110px]" />
+      <div className="absolute -right-[12%] bottom-0 h-[45%] w-[60%] rounded-full bg-blue-400/8 blur-[90px]" />
       <div
-        className="absolute inset-0 opacity-[0.22]"
+        className="absolute inset-0 opacity-[0.18]"
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
@@ -48,7 +48,7 @@ export type ExpertConsultationSectionProps = {
  * Standalone expert band — not wrapped in a white Card. Fills available column width/height.
  */
 const shellCompact =
-  "relative overflow-hidden rounded-xl border border-emerald-500/30 bg-linear-to-b from-emerald-950 via-[#061510] to-[#020807] text-zinc-100 antialiased shadow-[0_12px_40px_-28px_rgba(0,0,0,0.75)] ring-1 ring-emerald-500/20 scheme-dark sm:rounded-2xl";
+  "relative overflow-hidden rounded-xl border border-blue-500/30 bg-linear-to-b from-blue-950 via-[#020b18] to-[#010610] text-zinc-100 antialiased shadow-[0_12px_40px_-28px_rgba(0,0,0,0.75)] ring-1 ring-blue-500/20 scheme-dark sm:rounded-2xl";
 
 export function ExpertConsultationSection({
   className,
@@ -98,19 +98,19 @@ export function ExpertConsultationSection({
         <ExpertAmbient />
         <div className="relative z-[2] flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-300/95">
-              <Sparkles className="h-3 w-3 shrink-0 text-emerald-300" aria-hidden />
+            <p className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-blue-300/95">
+              <Sparkles className="h-3 w-3 shrink-0 text-blue-300" aria-hidden />
               Expert consultation
             </p>
             <h2 id="expert-consultation-heading" className="font-display text-base font-bold leading-tight text-white sm:text-lg">
               {headlineCompact}
             </h2>
             <p className="text-[11px] leading-snug text-zinc-300 sm:text-xs">{leadCompact}</p>
-            <p className="text-[10px] leading-relaxed text-emerald-200/85">
+            <p className="text-[10px] leading-relaxed text-blue-200/85">
               <span className="whitespace-nowrap">15 min session</span>
-              <span className="mx-1.5 text-emerald-500/80">·</span>
+              <span className="mx-1.5 text-blue-500/80">·</span>
               <span className="whitespace-nowrap">No inventory pitch</span>
-              <span className="mx-1.5 text-emerald-500/80">·</span>
+              <span className="mx-1.5 text-blue-500/80">·</span>
               <span className="whitespace-nowrap">Fee before you pay</span>
             </p>
           </div>
@@ -118,7 +118,7 @@ export function ExpertConsultationSection({
             <Button
               variant="expert"
               size="sm"
-              className="h-9 w-full gap-1.5 rounded-lg px-4 text-xs shadow-md shadow-emerald-950/40 sm:h-10 sm:w-auto sm:min-w-[10.5rem] sm:text-sm"
+              className="h-9 w-full gap-1.5 rounded-lg px-4 text-xs shadow-md shadow-blue-950/40 sm:h-10 sm:w-auto sm:min-w-[10.5rem] sm:text-sm"
               asChild
             >
               <Link
@@ -162,14 +162,14 @@ export function ExpertConsultationSection({
     >
       <ExpertAmbient />
       <div
-        className="pointer-events-none absolute inset-x-5 top-0 z-[1] h-px bg-linear-to-r from-transparent via-emerald-400/35 to-transparent sm:inset-x-7"
+        className="pointer-events-none absolute inset-x-5 top-0 z-[1] h-px bg-linear-to-r from-transparent via-blue-400/35 to-transparent sm:inset-x-7"
         aria-hidden
       />
 
       <div className="relative z-[2] flex min-h-0 flex-1 flex-col justify-between gap-6 p-5 sm:p-6 lg:p-7">
         <div className="min-w-0 space-y-3">
-          <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-300" aria-hidden />
+          <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-blue-300">
+            <Sparkles className="h-3.5 w-3.5 text-blue-300" aria-hidden />
             Expert consultation
           </p>
           <h2
@@ -184,9 +184,9 @@ export function ExpertConsultationSection({
             {bullets.map(({ icon: Icon, text }) => (
               <li
                 key={text}
-                className="flex items-start gap-2 rounded-xl border border-emerald-400/25 bg-emerald-950/50 px-3 py-2.5 text-[11px] leading-snug text-zinc-100 sm:text-xs"
+                className="flex items-start gap-2 rounded-xl border border-blue-400/25 bg-blue-950/50 px-3 py-2.5 text-[11px] leading-snug text-zinc-100 sm:text-xs"
               >
-                <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300" aria-hidden />
+                <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-300" aria-hidden />
                 {text}
               </li>
             ))}
@@ -197,7 +197,7 @@ export function ExpertConsultationSection({
           <Button
             variant="expert"
             size="lg"
-            className="h-11 w-full gap-2 rounded-xl shadow-lg shadow-emerald-950/50 sm:h-12 sm:w-auto sm:min-w-[13rem] sm:px-6"
+            className="h-11 w-full gap-2 rounded-xl shadow-lg shadow-blue-950/50 sm:h-12 sm:w-auto sm:min-w-[13rem] sm:px-6"
             asChild
           >
             <Link

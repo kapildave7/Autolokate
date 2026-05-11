@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, GitCompare, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, GitCompare, Link2, Loader2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { compareVariantsList } from "@/lib/client/catalogue-api";
 import { getTaxonomy } from "@/lib/client/taxonomy-api";
@@ -148,67 +149,117 @@ export function CatalogueCompareView() {
 
   return (
     <PageFade>
-      <section className="border-b border-border bg-gradient-to-b from-secondary/60 via-background to-background">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="max-w-2xl space-y-3">
-              <Button variant="ghost" size="sm" className="-ml-2 w-fit gap-1 text-muted-foreground" asChild>
-                <Link
-                  href="/compare"
-                  onClick={() =>
-                    trackEvent("catalogue_compare_to_main", { event_category: GA_CATEGORIES.compare })
-                  }
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Full compare workspace
-                </Link>
-              </Button>
-              <Badge variant="secondary" className="gap-1 border-primary/15 bg-primary/8 text-primary">
-                <GitCompare className="h-3.5 w-3.5" />
-                Catalogue table
-              </Badge>
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                {title}
-              </h1>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Same <strong className="font-medium text-foreground">variant tray</strong> as{" "}
-                <Link href="/compare" className="font-medium text-primary underline-offset-4 hover:underline">
-                  /compare
-                </Link>
-                — add rows from search, listing cards, or model pages. This page is the compact spec table; inventory
-                context stays on the main compare view.
-              </p>
-            </div>
+      {/* ── Hero Banner ── */}
+      <section className="relative overflow-hidden border-b border-border bg-background">
+        {/* Banner image — right side */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-full md:w-3/5 lg:w-1/2" aria-hidden>
+          <Image
+            src="/images/home_footer_light.png"
+            alt=""
+            fill
+            priority
+            className="block object-cover object-left dark:hidden"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+          <Image
+            src="/images/home_footer_dark.png"
+            alt=""
+            fill
+            priority
+            className="hidden object-cover object-left dark:block"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+          <div className="absolute inset-y-0 left-0 w-2/3 bg-linear-to-r from-background via-background/80 to-transparent" />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+          <div className="max-w-2xl space-y-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="-ml-2 w-fit gap-1.5 text-muted-foreground hover:text-foreground"
+              asChild
+            >
+              <Link
+                href="/compare"
+                onClick={() =>
+                  trackEvent("catalogue_compare_to_main", { event_category: GA_CATEGORIES.compare })
+                }
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Full compare workspace
+              </Link>
+            </Button>
+
+            <Badge
+              variant="secondary"
+              className="gap-1.5 border-primary/20 bg-primary/10 text-primary dark:bg-primary/20"
+            >
+              <GitCompare className="h-3.5 w-3.5" />
+              Catalogue table
+            </Badge>
+
+            <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-[2rem] lg:leading-tight">
+              {title}
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Same <strong className="font-medium text-foreground">variant tray</strong> as{" "}
+              <Link href="/compare" className="font-medium text-primary underline-offset-4 hover:underline">
+                /compare
+              </Link>
+              {" "}— add rows from search, listing cards, or model pages.{" "}
+              This page is the compact spec table; inventory context stays on the main compare view.
+            </p>
           </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+          {/* ── Variant slots ── */}
+          <div className="mt-7 grid gap-3 sm:grid-cols-3">
             {slots.map((i) => {
               const id = variantIds[i];
               const row = id ? loadedById.get(id) : undefined;
+              const num = i + 1;
               return (
                 <div
                   key={i}
                   className={cn(
-                    "flex min-h-[6.5rem] items-center gap-3 rounded-2xl border p-3 transition sm:min-h-[7rem] sm:p-4",
+                    "relative flex min-h-[5.5rem] items-center gap-3 rounded-2xl border p-3.5 transition",
                     id
-                      ? "border-border bg-card shadow-sm ring-1 ring-foreground/[0.04]"
-                      : "border-dashed border-border bg-muted/15"
+                      ? "border-primary/25 bg-card shadow-sm ring-1 ring-primary/10"
+                      : "border-dashed border-border/70 bg-muted/20"
                   )}
                 >
+                  {/* Slot number badge */}
+                  <span
+                    className={cn(
+                      "absolute left-3.5 top-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                      id ? "bg-primary text-white" : "border border-border bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {num}
+                  </span>
+
                   {id && row ? (
                     <>
-                      <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-muted/50 sm:h-16 sm:w-24">
+                      <div className="relative mt-4 h-12 w-20 shrink-0 overflow-hidden rounded-xl bg-muted/50">
                         {typeof row.image_url === "string" && row.image_url ? (
-                          <RemoteImageWithFallback src={row.image_url} alt="" fill className="object-cover" sizes="96px" />
+                          <RemoteImageWithFallback
+                            src={row.image_url}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="80px"
+                          />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">—</div>
+                          <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
+                            —
+                          </div>
                         )}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-bold text-foreground sm:text-sm">
+                      <div className="mt-4 min-w-0 flex-1">
+                        <p className="truncate text-xs font-bold text-foreground">
                           {[row.brand_name, row.model_name].filter(Boolean).join(" ") || "Variant"}
                         </p>
-                        <p className="truncate text-[11px] text-muted-foreground sm:text-xs">
+                        <p className="truncate text-[11px] text-muted-foreground">
                           {String(row.variant_name ?? row.name ?? "")}
                         </p>
                       </div>
@@ -222,28 +273,25 @@ export function CatalogueCompareView() {
                           });
                           removeVariant(id);
                         }}
-                        className="shrink-0 rounded-xl border border-border bg-secondary/50 p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                        className="mt-4 shrink-0 rounded-full border border-border/80 bg-muted/60 p-1 text-muted-foreground transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30"
                         aria-label="Remove from compare"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </>
                   ) : id ? (
-                    <div className="flex w-full items-center gap-3">
-                      <Loader2 className="h-5 w-5 shrink-0 animate-spin text-muted-foreground" />
-                      <div className="min-w-0 text-left">
-                        <p className="text-sm font-semibold text-foreground">Loading variant…</p>
-                        <p className="truncate text-xs text-muted-foreground">{id.slice(0, 12)}…</p>
-                      </div>
+                    <div className="mt-4 flex w-full items-center gap-3">
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+                      <p className="text-xs font-semibold text-muted-foreground">Loading…</p>
                     </div>
                   ) : (
-                    <div className="flex w-full items-center gap-2 text-left sm:gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-border bg-muted/40 text-[#14532d] dark:text-[#166534]">
-                        <GitCompare className="h-5 w-5" />
+                    <div className="mt-4 flex w-full items-center gap-2.5">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-dashed border-primary/40 bg-primary/5 text-primary">
+                        <Plus className="h-4 w-4" />
                       </span>
                       <div>
-                        <p className="text-xs font-semibold text-foreground sm:text-sm">Slot {i + 1}</p>
-                        <p className="text-[11px] text-muted-foreground sm:text-xs">Search below</p>
+                        <p className="text-xs font-semibold text-foreground">Add another variant</p>
+                        <p className="text-[11px] text-muted-foreground">Search below</p>
                       </div>
                     </div>
                   )}
@@ -254,26 +302,35 @@ export function CatalogueCompareView() {
         </div>
       </section>
 
+      {/* ── Main content ── */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
+
+          {/* Left: search */}
           <div className="lg:col-span-5">
-            <h2 className="text-base font-bold text-foreground">Add catalogue variants</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Search by brand, model, or trim. Listings you add via “Compare” on cards resolve here when matched to a
-              catalogue variant.
-            </p>
-            <div className="mt-4">
-              <CatalogueVariantSearch
-                excludeVariantIds={variantIds}
-                disabled={variantIds.length >= 3}
-                onAddVariant={handleAddFromSearch}
-                analyticsContext="catalogue_compare_page"
-              />
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <h2 className="text-base font-bold text-foreground">Add catalogue variants</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Search by brand, model, or trim. Listings you add via "Compare" on cards resolve here as a catalogue
+                variant.
+              </p>
+              <div className="mt-4">
+                <CatalogueVariantSearch
+                  excludeVariantIds={variantIds}
+                  disabled={variantIds.length >= 3}
+                  onAddVariant={handleAddFromSearch}
+                  analyticsContext="catalogue_compare_page"
+                />
+              </div>
             </div>
+
             {variantIds.length > 0 && variantIds.length < 2 ? (
-              <p className="mt-4 rounded-xl border border-dashed border-border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+              <p className="mt-4 rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
                 Add <strong className="text-foreground">one more</strong> variant to load the table — or open{" "}
-                <Link href={comparePathForIds(variantIds)} className="font-medium text-primary underline-offset-4 hover:underline">
+                <Link
+                  href={comparePathForIds(variantIds)}
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
                   the full compare workspace
                 </Link>{" "}
                 for the same tray with a richer matrix.
@@ -281,13 +338,17 @@ export function CatalogueCompareView() {
             ) : null}
           </div>
 
+          {/* Right: table */}
           <div className="min-w-0 lg:col-span-7">
             {variantIds.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center sm:p-10">
-                <p className="text-sm font-medium text-foreground">Nothing in your compare tray yet</p>
+                <span className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary">
+                  <GitCompare className="h-6 w-6" />
+                </span>
+                <p className="mt-3 text-sm font-semibold text-foreground">Nothing in your compare tray yet</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Add variants from search, or use <strong className="text-foreground">Compare</strong> on any listing or
-                  matched car card — your tray syncs to this URL automatically.
+                  Add variants from search, or use <strong className="text-foreground">Compare</strong> on any listing
+                  or matched car card — your tray syncs to this URL automatically.
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <Button variant="cta" asChild>
@@ -301,71 +362,101 @@ export function CatalogueCompareView() {
             ) : null}
 
             {variantIds.length >= 2 && isPending ? (
-              <div className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-card py-16 text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-card py-16 text-muted-foreground shadow-sm">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Loading comparison…
               </div>
             ) : null}
 
             {variantIds.length >= 2 && isError ? (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-6 text-sm text-rose-900">
-                Could not load this comparison.{error instanceof Error ? ` ${error.message}` : ""}
+              <div className="rounded-2xl border border-red-200 bg-red-50/80 p-6 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+                Could not load this comparison.
+                {error instanceof Error ? ` ${error.message}` : ""}
               </div>
             ) : null}
 
             {variantIds.length >= 2 && !isPending && !isError && variants.length < 2 ? (
-              <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+              <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground shadow-sm">
                 The API returned fewer than two variants. Confirm the IDs are valid catalogue variant IDs.
               </div>
             ) : null}
 
             {variants.length >= 2 && rows.length > 0 ? (
-              <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-                <table className="w-full min-w-[640px] border-separate border-spacing-0 text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/50">
-                      <th className="sticky left-0 z-[1] bg-muted/50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                        Detail
-                      </th>
-                      {variants.map((v, i) => (
-                        <th key={String(v.id ?? i)} className="min-w-[10rem] px-4 py-3 align-bottom">
-                          <p className="font-display text-sm font-semibold text-foreground">
-                            {String(v.variant_name ?? v.name ?? `Variant ${i + 1}`)}
-                          </p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {[v.brand_name, v.model_name].filter(Boolean).join(" ")}
-                          </p>
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:thin]">
+                  <table className="w-full min-w-[600px] border-separate border-spacing-0 text-left text-sm">
+                    <thead>
+                      <tr>
+                        {/* Label column */}
+                        <th className="sticky left-0 z-[2] min-w-36 border-b border-border bg-muted/80 px-4 py-3.5 text-left align-bottom backdrop-blur-sm sm:min-w-40">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                            Detail
+                          </span>
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, idx) => (
-                      <tr key={row.key} className={cn(idx % 2 === 0 ? "bg-card" : "bg-muted/30")}>
-                        <th
-                          scope="row"
-                          className="sticky left-0 z-[1] border-t border-border bg-inherit px-4 py-2.5 text-xs font-semibold text-muted-foreground"
-                        >
-                          {row.label}
-                        </th>
-                        {row.values.map((cell, ci) => (
-                          <td key={ci} className="border-t border-border px-4 py-2.5 text-foreground">
-                            {cell}
-                          </td>
+                        {/* Variant columns */}
+                        {variants.map((v, i) => (
+                          <th
+                            key={String(v.id ?? i)}
+                            className="min-w-[11rem] border-b border-l border-border bg-background/95 px-4 py-3.5 align-bottom backdrop-blur-sm"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                                {i + 1}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-bold text-foreground">
+                                  {String(v.variant_name ?? v.name ?? `Variant ${i + 1}`)}
+                                </p>
+                                <p className="truncate text-[11px] text-muted-foreground">
+                                  {[v.brand_name, v.model_name].filter(Boolean).join(" ")}
+                                </p>
+                              </div>
+                            </div>
+                          </th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, idx) => {
+                        const stripe = idx % 2 === 0;
+                        return (
+                          <tr key={row.key}>
+                            <th
+                              scope="row"
+                              className={cn(
+                                "sticky left-0 z-[1] border-b border-border/70 px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur-sm",
+                                stripe ? "bg-muted/60" : "bg-card/95"
+                              )}
+                            >
+                              {row.label}
+                            </th>
+                            {row.values.map((cell, ci) => (
+                              <td
+                                key={ci}
+                                className={cn(
+                                  "border-b border-l border-border/50 px-4 py-2.5 text-sm text-foreground/90",
+                                  stripe ? "bg-muted/25" : "bg-background/70"
+                                )}
+                              >
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : null}
 
             {variants.length >= 2 ? (
-              <p className="mt-6 text-center text-xs text-muted-foreground">
+              <p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                <Link2 className="h-3.5 w-3.5 opacity-60" aria-hidden />
                 Share this table:{" "}
                 <button
                   type="button"
-                  className="font-medium text-primary underline-offset-4 hover:underline"
+                  className="font-semibold text-primary underline-offset-4 hover:underline"
                   onClick={() => {
                     const url = `${window.location.origin}${catalogueComparePath(variantIds)}`;
                     void navigator.clipboard.writeText(url);
@@ -373,6 +464,7 @@ export function CatalogueCompareView() {
                       event_category: GA_CATEGORIES.compare,
                       variant_count: variantIds.length,
                     });
+                    toast.success("Link copied!");
                   }}
                 >
                   Copy link

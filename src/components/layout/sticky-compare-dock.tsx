@@ -37,11 +37,11 @@ export function StickyCompareDock() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 380, damping: 32 }}
-          className="fixed bottom-0 left-0 right-0 z-45 border-t border-border bg-background/98 px-3 py-2 pb-safe shadow-[0_-4px_24px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-4 sm:py-3"
+          className="fixed bottom-0 left-0 right-0 z-45 border-t border-border bg-background/98 px-3 py-2 pb-safe shadow-[0_-4px_24px_rgba(15,23,42,0.08)] backdrop-blur-md sm:px-4 sm:py-3"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Scale className="h-4 w-4 shrink-0 text-[#14532d] dark:text-[#166534]" />
+              <Scale className="h-4 w-4 shrink-0 text-primary" />
               <span className="min-w-0">
                 Compare · {variantIds.length}/3 variants
               </span>
@@ -61,7 +61,7 @@ export function StickyCompareDock() {
                 return (
                   <div
                     key={id}
-                    className="flex items-center gap-2 rounded-xl border border-border bg-secondary/40 py-1 pl-1 pr-2"
+                    className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 py-1 pl-1 pr-2"
                   >
                     <div className="relative h-10 w-14 overflow-hidden rounded-lg bg-muted">
                       {img ? (
@@ -73,13 +73,13 @@ export function StickyCompareDock() {
                       )}
                     </div>
                     <div className="min-w-0 max-w-[140px]">
-                      <p className="truncate text-xs font-medium text-foreground">{title}</p>
+                      <p className="truncate text-xs font-semibold text-foreground">{title}</p>
                       <p className="truncate text-[10px] text-muted-foreground">{sub}</p>
-                      {priceLabel ? <p className="text-[10px] font-semibold text-foreground">{priceLabel}</p> : null}
+                      {priceLabel ? <p className="text-[10px] font-bold text-primary">{priceLabel}</p> : null}
                     </div>
                     <button
                       type="button"
-                      className="touch-target inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-background hover:text-foreground"
+                      className="touch-target inline-flex items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30"
                       aria-label="Remove"
                       onClick={() => {
                         trackEvent("compare_tray_toggle", {
@@ -101,7 +101,7 @@ export function StickyCompareDock() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-11 min-h-11 flex-1 sm:h-9 sm:min-h-9 sm:flex-initial"
+                className="h-11 min-h-11 flex-1 border-border sm:h-9 sm:min-h-9 sm:flex-initial"
                 disabled={variantIds.length < 2}
                 asChild
               >
@@ -121,7 +121,7 @@ export function StickyCompareDock() {
               <Button
                 variant="default"
                 size="sm"
-                className="h-11 min-h-11 flex-1 bg-[#14532d] hover:bg-[#14532d]/90 dark:bg-[#166534] sm:h-9 sm:min-h-9 sm:flex-initial"
+                className="h-11 min-h-11 flex-1 bg-primary hover:bg-primary/90 sm:h-9 sm:min-h-9 sm:flex-initial"
                 disabled={variantIds.length < 2}
                 asChild
               >

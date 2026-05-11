@@ -1,9 +1,8 @@
 "use client";
 
 import { Fragment, useMemo } from "react";
-import { Minus, Trophy } from "lucide-react";
+import { Minus } from "lucide-react";
 import { RemoteImageWithFallback } from "@/components/ui/remote-image";
-import { Badge } from "@/components/ui/badge";
 import { cn, formatINR } from "@/lib/utils";
 import {
   labelForCompareRowKey,
@@ -115,17 +114,18 @@ export function CompareCatalogueMatrix({ variants, labelMaps }: Props) {
     return [...orderedScalar, ...orderedFeatures].filter((row) => row.values.every(isCellPresent));
   }, [variants, labelMaps]);
 
-  const accent = "bg-primary/8 ring-1 ring-primary/25";
+  const accent = "bg-primary/8 dark:bg-primary/12";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="max-h-[72vh] overflow-auto [-ms-overflow-style:none] [scrollbar-width:thin]">
         <table className="w-full min-w-[min(100%,720px)] border-separate border-spacing-0 text-left text-sm">
           <thead>
             <tr className="[&_th]:border-b [&_th]:border-border">
+              {/* Spec label column header */}
               <th
                 scope="col"
-                className="sticky left-0 top-0 z-4 min-w-38 bg-muted/95 px-3 py-3 text-left align-bottom backdrop-blur-sm sm:min-w-42 sm:px-4 sm:py-4"
+                className="sticky left-0 top-0 z-4 min-w-36 bg-muted/95 px-3 py-3 text-left align-bottom backdrop-blur-sm sm:min-w-40 sm:px-4 sm:py-4"
               >
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Spec</span>
               </th>
@@ -149,24 +149,23 @@ export function CompareCatalogueMatrix({ variants, labelMaps }: Props) {
                   <th
                     key={String(v.id ?? colIdx)}
                     scope="col"
-                    className="sticky top-0 z-3 min-w-44 border-l border-border/70 bg-background/95 px-3 py-3 text-left align-bottom backdrop-blur-sm sm:min-w-50 sm:px-4 sm:py-4"
+                    className="sticky top-0 z-3 min-w-44 border-l border-border/60 bg-background/97 px-3 py-3 text-left align-bottom backdrop-blur-sm sm:min-w-48 sm:px-4 sm:py-4"
                   >
-                    <div className="relative mb-3 aspect-16/10 w-full overflow-hidden rounded-xl border border-border bg-muted/40">
+                    {/* Car image with numbered badge */}
+                    <div className="relative mb-3 aspect-16/10 w-full overflow-hidden rounded-xl border border-border/70 bg-muted/40">
                       {img ? (
                         <RemoteImageWithFallback src={img} alt="" fill className="object-cover" sizes="200px" />
                       ) : (
                         <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">—</div>
                       )}
-                      <span className="absolute left-2 top-2 flex h-6 min-w-6 items-center justify-center rounded-md bg-background/95 px-1.5 text-[10px] font-bold text-foreground shadow-sm ring-1 ring-border">
+                      <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-sm">
                         {colIdx + 1}
                       </span>
                     </div>
-                    <p className="font-display text-sm font-bold leading-snug tracking-tight text-foreground">{brand}</p>
-                    <p className="mt-0.5 line-clamp-1 text-xs font-medium text-muted-foreground">{model}</p>
-                    <p className="mt-1 line-clamp-1 text-xs font-semibold text-foreground">{title}</p>
-                    <Badge variant="secondary" className="mt-2 border-border bg-muted/60 text-[11px] font-semibold">
-                      {price}
-                    </Badge>
+                    <p className="text-xs font-bold leading-snug text-foreground">{brand}</p>
+                    <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{model}</p>
+                    <p className="mt-0.5 line-clamp-2 text-[11px] font-semibold text-foreground leading-snug">{title}</p>
+                    <p className="mt-1.5 text-[11px] font-bold text-primary">{price}</p>
                   </th>
                 );
               })}
@@ -184,7 +183,7 @@ export function CompareCatalogueMatrix({ variants, labelMaps }: Props) {
                     <tr key={`${row.key}-section`}>
                       <th
                         colSpan={variants.length + 1}
-                        className="border-b border-border bg-muted/70 px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground"
+                        className="border-b border-t border-border bg-primary/5 px-4 py-2 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-primary"
                       >
                         {row.section}
                       </th>
@@ -194,8 +193,8 @@ export function CompareCatalogueMatrix({ variants, labelMaps }: Props) {
                     <th
                       scope="row"
                       className={cn(
-                        "sticky left-0 z-1 border-b border-border/80 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-[6px_0_24px_-12px_rgba(15,23,42,0.12)] backdrop-blur-sm sm:px-4 sm:py-3",
-                        stripe ? "bg-muted/70" : "bg-card/95"
+                        "sticky left-0 z-1 border-b border-border/70 px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground shadow-[4px_0_12px_-4px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-4 sm:py-3",
+                        stripe ? "bg-muted/60" : "bg-card/95"
                       )}
                     >
                       {row.label}
@@ -204,12 +203,12 @@ export function CompareCatalogueMatrix({ variants, labelMaps }: Props) {
                       <td
                         key={i}
                         className={cn(
-                          "border-b border-l border-border/60 px-3 py-2.5 align-middle text-sm text-foreground sm:px-4 sm:py-3",
-                          stripe ? "bg-muted/40" : "bg-background/90",
-                          diff && accent
+                          "border-b border-l border-border/50 px-3 py-2.5 align-middle text-sm sm:px-4 sm:py-3",
+                          diff ? accent : stripe ? "bg-muted/30" : "bg-background/80",
+                          diff ? "text-foreground font-semibold" : "text-foreground/80"
                         )}
                       >
-                        <span className="font-medium leading-snug">{cell}</span>
+                        <span className="leading-snug">{cell}</span>
                       </td>
                     ))}
                   </tr>
@@ -219,20 +218,20 @@ export function CompareCatalogueMatrix({ variants, labelMaps }: Props) {
           </tbody>
         </table>
       </div>
+
       {rows.length === 0 ? (
         <div className="border-t border-border px-4 py-8 text-center text-sm text-muted-foreground">
           No comparable fields with values for all selected variants.
         </div>
       ) : null}
-      <div className="flex flex-wrap items-center gap-3 border-t border-border bg-muted/30 px-4 py-3 text-[11px] text-muted-foreground">
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border bg-muted/20 px-4 py-3 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary">
-            <Trophy className="h-3 w-3" aria-hidden />
-          </span>
+          <span className="h-3 w-3 rounded-sm bg-primary/15 ring-1 ring-primary/30" aria-hidden />
           Rows with differences are tinted (same value in all columns = neutral).
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <Minus className="h-3.5 w-3.5 opacity-60" aria-hidden />
+          <Minus className="h-3 w-3 opacity-50" aria-hidden />
           Ex-showroom data from catalogue API; specs vary by OEM updates.
         </span>
       </div>
